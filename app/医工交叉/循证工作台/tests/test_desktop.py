@@ -535,7 +535,8 @@ class SmokeTestTests(WorkspaceCase):
         self.assertIs(create_kwargs['text_select'], True)
         self.assertEqual(webview.start_kwargs['gui'], 'edgechromium')
         self.assertIs(webview.start_kwargs['private_mode'], False)
-        self.assertEqual(Path(webview.start_kwargs['storage_path']),
+        # Windows TEMP may use an 8.3 alias (RUNNER~1); compare resolved paths.
+        self.assertEqual(Path(webview.start_kwargs['storage_path']).resolve(),
                          self.data_dir.resolve() / 'browser')
         self.assertEqual(webview.settings['ALLOW_DOWNLOADS'], True)
         self.assertEqual(webview.settings['OPEN_EXTERNAL_LINKS_IN_BROWSER'], True)
