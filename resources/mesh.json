@@ -1,0 +1,10 @@
+{
+  "year": 2026,
+  "asset_name": "mesh-2026.sqlite.gz",
+  "release_tag": "v1.0.0",
+  "database_bytes": 163684352,
+  "database_sha256": "10d3b332675e2fe8e6634fb18924a7320550f1635b968f1acba946e099e7c95e",
+  "archive_sha256": "875a2d32048c43dbc35b250773a45f88aa2d78a4d752034ebc3cee838b2782c4",
+  "source": "https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/",
+  "note": "Locally indexed NLM MeSH; distributed as a separate release asset, never committed as a 163MB Git blob."
+}

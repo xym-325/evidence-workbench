@@ -1,0 +1,48 @@
+[
+  {
+    "id": "lung-generalization-20261017-v2",
+    "title": "低剂量CT肺结节 · 从检索到证据初稿",
+    "recorded_at": "2026-10-17T08:03:09.020888+00:00",
+    "source_run_id": "d0e972d8785243cf9ffe9139caacbeba",
+    "stats": {
+      "hit": 100,
+      "dedup": 99,
+      "included": 96,
+      "uncertain": 3,
+      "excluded": 0,
+      "adopted": 12,
+      "shortlisted": 0,
+      "provisional_adopted": 0,
+      "strict_adopted": 12,
+      "retrieved": 100,
+      "count_basis": "retrieved_batch"
+    },
+    "provider": "claude-cli",
+    "retrieval_seconds": 10.44,
+    "synthesis_seconds": 34.77,
+    "note": "真实数据库检索与Claude Code初稿的已保存案例；回放不重新调用来源或模型。"
+  },
+  {
+    "id": "koa-precision-20261017",
+    "title": "膝骨关节炎 · AI精准分型研究",
+    "recorded_at": "2026-10-17T08:03:13.835047+00:00",
+    "source_run_id": "24fba0f7eea0432dad35ef3b4d682683",
+    "stats": {
+      "hit": 100,
+      "dedup": 97,
+      "included": 96,
+      "uncertain": 1,
+      "excluded": 0,
+      "adopted": 12,
+      "shortlisted": 0,
+      "provisional_adopted": 0,
+      "strict_adopted": 12,
+      "retrieved": 100,
+      "count_basis": "retrieved_batch"
+    },
+    "provider": "claude-cli",
+    "retrieval_seconds": 11.89,
+    "synthesis_seconds": 65.01,
+    "note": "真实数据库检索及Claude Code初稿的已保存案例。"
+  }
+]

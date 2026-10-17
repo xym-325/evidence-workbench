@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>循证科研智能体工作台</title>
+<style>
+  :root{--accent:#0b6b5b;--accent2:#12a086;--bg:#eef3f1;--ink:#13211e;--muted:#5f6f6c;
+        --card:#fff;--line:#dde6e3;--ok:#0e8f78;--warn:#c07a12;--bad:#c0392b;--mut:#8a9996;
+        --pend:#c9d4d1;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.6}
+  header{background:linear-gradient(135deg,#0b6b5b,#12a086 70%,#2bb89a);color:#fff;
+         padding:28px 30px 22px}
+  header h1{margin:0 0 6px;font-size:23px;letter-spacing:.3px}
+  header p{margin:0;opacity:.95;font-size:13.5px;max-width:800px}
+  .badges{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+  .badges span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
+    border-radius:999px;padding:3px 12px;font-size:12px}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 16px 70px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+        padding:18px 20px;margin:16px 0;box-shadow:0 2px 10px rgba(11,107,91,.05)}
+  .card h2{font-size:16.5px;margin:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .step-no{background:var(--accent);color:#fff;border-radius:9px;font-size:12px;
+           padding:3px 10px;font-weight:700;letter-spacing:.4px}
+  .sub{color:var(--muted);font-size:12.7px;margin:4px 0 12px}
+  textarea,input[type=text]{width:100%;padding:11px 13px;border:1px solid var(--line);
+    border-radius:11px;font-family:inherit;font-size:13.5px;resize:vertical;background:#fbfdfc}
+  textarea:focus,input:focus{outline:2px solid #bfe4db;border-color:var(--accent2)}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+  button{border:0;border-radius:11px;padding:10px 18px;font-size:13.8px;cursor:pointer;
+         font-weight:600;transition:.15s}
+  button:hover{transform:translateY(-1px)}
+  button:disabled{opacity:.5;cursor:default;transform:none}
+  .primary{background:var(--accent);color:#fff}
+  .primary:hover{background:var(--accent2)}
+  .ghost{background:#e5efec;color:var(--accent)}
+  .mini{padding:6px 13px;font-size:12.5px;border-radius:9px}
+  label.chk{font-size:13px;color:var(--muted);display:flex;gap:7px;align-items:center;
+    background:#f0f6f4;padding:8px 12px;border-radius:10px;cursor:pointer}
+  pre{background:#0e1b19;color:#d6efe9;padding:15px 17px;border-radius:12px;overflow:auto;
+      font-size:12.6px;white-space:pre-wrap;word-break:break-word;margin:8px 0 4px;
+      font-family:"SFMono-Regular",Consolas,monospace;position:relative}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#eef4f2;font-weight:600}
+  .badge{display:inline-block;border-radius:999px;font-size:11.5px;padding:2px 10px;
+         font-weight:700;color:#fff;white-space:nowrap}
+  .b-ok{background:var(--ok)} .b-warn{background:var(--warn)} .b-bad{background:var(--bad)}
+  .b-mut{background:var(--mut)} .b-pend{background:var(--pend);color:#43524f}
+  .muted{color:var(--muted)} .small{font-size:12.3px}
+  .headline{font-weight:700;font-size:13.8px;margin:16px 0 6px;color:var(--accent)}
+  .para{font-size:13.3px;margin:6px 0;color:#22322f}
+  /* timeline */
+  .timeline{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .tl{flex:1;min-width:150px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;
+      background:#fafcfb;transition:.2s}
+  .tl .t{font-size:12.6px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .tl .d{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--pend);flex:none}
+  .tl.run{border-color:var(--accent2);background:#effaf7}
+  .tl.run .dot{background:var(--accent2);animation:pulse 1s infinite}
+  .tl.done{border-color:var(--ok)} .tl.done .dot{background:var(--ok)}
+  .tl.fail{border-color:var(--bad)} .tl.fail .dot{background:var(--bad)}
+  @keyframes pulse{50%{opacity:.35}}
+  /* tiles */
+  .tiles{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 4px}
+  .tile{border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:92px;
+        background:#fafcfb;text-align:center}
+  .tile .n{font-size:22px;font-weight:800;color:var(--accent)}
+  .tile .l{font-size:11.7px;color:var(--muted)}
+  /* funnel */
+  .funnel{margin:10px 0}
+  .frow{display:flex;align-items:center;gap:10px;margin:5px 0}
+  .frow .fl{width:78px;font-size:12.3px;color:var(--muted);flex:none;text-align:right}
+  .fbar{height:24px;border-radius:7px;background:linear-gradient(90deg,#12a086,#7ed0bf);
+        min-width:14px;transition:width .6s ease;display:flex;align-items:center;
+        justify-content:flex-end;padding-right:8px;color:#fff;font-size:11.5px;font-weight:700}
+  .frow.exc .fbar{background:linear-gradient(90deg,#c0392b,#e08a80)}
+  /* bars */
+  .bars{display:flex;align-items:flex-end;gap:12px;height:110px;margin:8px 0;padding:0 4px}
+  .bcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+        height:100%}
+  .bcol .bv{font-size:11.5px;font-weight:700;color:var(--accent)}
+  .bcol .bb{width:70%;border-radius:6px 6px 0 0;
+        background:linear-gradient(180deg,#12a086,#8ed9c8);min-height:4px;transition:height .6s}
+  .bcol .bl{font-size:11px;color:var(--muted);margin-top:4px}
+  .stack{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line);
+         margin:6px 0}
+  .stack div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;
+        font-weight:700}
+  .vok{background:var(--ok)} .vbad{background:var(--bad)} .vwarn{background:var(--warn)}
+  .vmut{background:var(--mut)}
+  details{border:1px solid var(--line);border-radius:11px;padding:8px 14px;margin:8px 0;
+          background:#fafcfb}
+  summary{cursor:pointer;font-weight:600;font-size:13.3px;color:var(--accent)}
+  details.sec{margin:10px 0}
+  details.sec>summary{font-size:14.5px;color:var(--accent)}
+  details.blk{border:0;border-left:3px solid #cfe6df;background:#fff;padding:2px 12px;
+              border-radius:8px;margin:6px 0}
+  details.blk>summary{font-size:13px;color:#245a50}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
+  .help{font-size:13px;line-height:1.75;color:#2a3b38}
+  .help b{display:block;margin:12px 0 4px;color:var(--accent)}
+  .help p{margin:4px 0}
+  .help ul,.help ol{margin:4px 0 4px 20px;padding:0}
+  .help li{margin:3px 0}
+  .pill{background:#e5efec;color:var(--accent);border-radius:999px;font-size:12px;
+        padding:4px 12px;margin:3px 5px 3px 0;display:inline-block;font-weight:600}
+  .verdict-card{border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:8px 0;
+        border-left:5px solid var(--mut);background:#fafcfb}
+  .verdict-card.ok{border-left-color:var(--ok)} .verdict-card.bad{border-left-color:var(--bad)}
+  .hidden{display:none}
+  .step-panel.collapsed > .flex ~ *{display:none}
+  .verdict-banner{border-radius:12px;padding:14px 18px;margin:8px 0;background:#eef4f2;
+                  border-left:6px solid var(--accent);font-size:15px;line-height:1.7}
+  .traffic{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:#fff}
+  .traffic .g{color:#0e8f78;font-weight:700}
+  .traffic .y{color:#c07a12;font-weight:700}
+  .traffic .r{color:#c0392b;font-weight:700}
+  .step-panel > .flex{cursor:pointer}
+  .step-panel.collapsed h2{opacity:.6}
+  .step-panel.collapsed h2::after{content:"（已收起，点标题展开）";font-size:12px;color:#8a9996;font-weight:400}
+  body.no-beg .beg{display:none}
+  .beg-hint{background:#fff8e6;border-left:4px solid #eab308;border-radius:8px;
+            padding:8px 12px;margin:8px 0;font-size:13px;color:#6b5320;line-height:1.65}
+  .beg-hint b{color:#8a5a00}
+  #begBanner{background:linear-gradient(120deg,#fff7e6,#eefaf5);border:1px solid #f0e2b8}
+  .term{cursor:help;border-bottom:1px dotted var(--accent);color:inherit}
+  #pop{position:absolute;z-index:70;max-width:320px;background:#0e1b19;color:#e8f5f1;
+       padding:10px 12px;border-radius:10px;font-size:12.5px;line-height:1.6;
+       box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .glos{display:flex;flex-wrap:wrap;gap:6px}
+  .glos .term{background:#e5efec;border-radius:999px;padding:3px 12px;font-size:12.5px;
+              border-bottom:0;font-weight:600;color:var(--accent)}
+  #tour{position:fixed;inset:0;background:rgba(10,20,18,.55);display:flex;align-items:center;
+        justify-content:center;z-index:80;padding:16px}
+  #tour.hidden{display:none !important}
+  .tour-box{background:#fff;border-radius:16px;max-width:540px;width:100%;padding:22px 24px;
+            box-shadow:0 24px 60px rgba(0,0,0,.35)}
+  .tour-box h3{margin:6px 0 10px;color:var(--accent);font-size:17px}
+  .tour-box .para{font-size:14px;line-height:1.75;color:#22322f}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid currentColor;
+        border-top-color:transparent;border-radius:50%;animation:s .7s linear infinite;
+        vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .flex{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}}
+  .stance{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fafcfb}
+  .stance h4{margin:0 0 6px;font-size:13px}
+  .stance ul{margin:0 0 0 16px;padding:0}
+  .stance li{font-size:12px;margin:3px 0}
+  footer{max-width:1000px;margin:0 auto;padding:0 16px 44px;color:var(--muted);font-size:11.8px}
+</style>
+<link rel="stylesheet" href="/presentation.css">
+</head>
+<body>
+<div id="warn" class="hidden" style="background:#7a1f16;color:#fff;padding:12px 22px;font-size:13.5px">
+  ⚠ 检测到你是<b>直接双击打开</b>本文件（地址是 <code>file://</code>）。后台未启动时会出现
+  “Failed to fetch”。请改为：在命令行运行 <code>python serve.py</code>，然后访问
+  <code>http://127.0.0.1:8130/</code>。若后台已在运行，本页仍可自动连接。
+</div>
+<header>
+  <div class="eyebrow"><span class="brand-mark">循</span> EVIDENCE WORKBENCH · 医学学术智能体 <span class="tag">v1.0.0</span></div>
+  <h1 id="heroTitle">循证科研智能体工作台</h1>
+  <p id="heroSub">从一个研究问题出发，找到文献、整理依据、核对引用。让综述里的每一步判断，都有迹可循。</p>
+  <div class="badges">
+    <span>① MeSH 检索式</span><span>② 检索·筛选·综述</span>
+    <span>③ 题录交叉核验</span><span>④ 引用与依据导出</span><span>真实来源 · 人工复核</span>
+  </div>
+</header>
+<nav class="workflow-nav" aria-label="工作区导航"><div><span class="nav-brand">循证 / RESEARCH</span><a href="#controlPanel">研究问题</a><a href="#resultOverview">结果概览</a><a href="#literatureDesk">文献工作区</a><a href="#synthesisPanel">综述与依据</a><a href="#panel3">引用核验</a></div></nav>
+
+<div class="wrap" id="proWrap">
+  <div class="card beg" id="begBanner">
+    <div style="font-size:14.5px;line-height:1.7"><b>第一次来？用大白话说：</b>
+      这是一台"学术研究小助手"。你输入一个问题，它帮你
+      <b>查文献、写出带引用的草稿，并逐条检查引用是不是真的</b>。照着下面 ①②③④ 走一遍就行。
+      <span class="muted small">（不想看人话提示，可取消勾选「小白模式」。）</span></div>
+  </div>
+  <div class="card" id="controlPanel">
+    <div class="flex"><h2>你想研究什么？</h2><span class="tag">医学科研 · 课程综述 · 文献导读</span></div>
+    <div class="sub">明确问题，找到相关研究，再把结论和出处放在一起。支持 PICO 结构化输入与任务卡确认。</div>
+    <div class="beg beg-hint"><b>新手提示：</b>在这里用一句大白话描述你要查什么，例如
+      "人工智能能不能帮医生给膝关节炎分型？"。不确定怎么写就点「载入示例」。</div>
+    <label class="control-label" for="pico">研究主题或临床问题</label>
+    <textarea id="pico" rows="2" placeholder="例如：低剂量 CT 肺结节检测，换一台扫描仪后还能保持性能吗？"></textarea>
+    <details class="pro-only" style="margin-top:8px">
+      <summary>PICO 向导 —— 把临床问题拆成 P / I / C / O，自动生成问题并运行</summary>
+      <div class="grid2" style="margin-top:8px">
+        <input type="text" id="pP" placeholder="P 人群/疾病，如 knee osteoarthritis">
+        <input type="text" id="pI" placeholder="I 干预/暴露，如 deep learning">
+        <input type="text" id="pC" placeholder="C 对照（可空）">
+        <input type="text" id="pO" placeholder="O 结局，如 precision endotyping">
+      </div>
+      <div class="row"><button class="primary mini" onclick="buildPICO()">用 PICO 生成任务卡并确认</button></div>
+    </details>
+    <details id="taskSettings" style="margin-top:10px"><summary>检索设置 · 时间窗、来源与必答问题 <button class="ghost mini" type="button" onclick="loadTaskSettings()">读取当前设置</button></summary><div id="taskForm" class="hidden"><div class="grid2" style="margin-top:12px"><label class="small">研究主题<input id="taskTopic" type="text"></label><label class="small">时间窗（如2019-2026）<input id="taskYears" type="text"></label></div><div class="row"><label class="small">推荐上限 <input id="taskMax" type="number" min="5" max="20" value="12"> 篇</label><label class="chk"><input id="sourcePubmed" type="checkbox"> PubMed</label><label class="chk"><input id="sourceOpenalex" type="checkbox"> OpenAlex</label><label class="chk"><input id="sourceSemantic" type="checkbox"> Semantic Scholar</label></div><label class="control-label" for="taskQuestions">希望综述回答的问题 · 每行一个</label><textarea id="taskQuestions" rows="3"></textarea><div class="row"><button class="primary mini" onclick="applyTaskSettings()">确认并应用设置</button><span id="taskSettingsStatus" class="muted small"></span></div></div></details>
+    <div class="row">
+      <button class="primary" id="runAll">▶ 运行全流程</button>
+      <button class="ghost pro-only" id="draft">生成任务卡草稿</button>
+      <button class="ghost" id="example">载入示例</button>
+      <button class="ghost" id="clear">清空</button>
+      <label class="chk"><input type="checkbox" id="online" checked> 检索后联网核对题录</label>
+      <label class="chk"><input type="checkbox" id="beginner"> 显示操作提示</label>
+      <button class="ghost" onclick="tourShow()">新手引导</button>
+      <button class="ghost" onclick="collapseAll(true)">收起结果</button>
+      <button class="ghost" onclick="collapseAll(false)">展开结果</button>
+      <span class="muted small" id="globalStatus"></span>
+    </div>
+    <div class="row" id="examples" style="margin-top:6px">
+      <span class="muted small">示例：</span>
+    </div>
+    <div class="case-panel" id="casePanel"><div class="flex"><b class="small">真实研究案例 · 可离线回放</b><span class="tag warm">回放会明确标注</span></div><div class="row" id="caseButtons"></div><div class="case-caption">保存实际检索过程与结果，用于快速了解工作流；点击“运行全流程”才会发起新的数据库检索。</div></div>
+    <div id="jobPanel" class="job-panel hidden" role="status" aria-live="polite"><div class="flex"><b id="jobTitle" class="small">正在处理研究任务</b><span id="jobElapsed" class="muted small"></span></div><ul id="jobEvents" class="job-events"></ul></div>
+    <div class="row" id="health" style="margin-top:6px">
+      <span class="muted small">组件自检：</span>
+    </div>
+    <div class="timeline" id="timeline">
+      <div class="tl" data-step="1"><div class="t"><span class="dot"></span>① 检索式生成</div><div class="d">MeSH · 词表溯源</div></div>
+      <div class="tl" data-step="2"><div class="t"><span class="dot"></span>② 检索·筛选·综述</div><div class="d">纳入/排除筛选</div></div>
+      <div class="tl" data-step="3"><div class="t"><span class="dot"></span>③ 引用核验</div><div class="d">真伪判定</div></div>
+      <div class="tl" data-step="4"><div class="t"><span class="dot"></span>④ 精读引擎</div><div class="d">SQ3R 技能</div></div>
+    </div>
+    <details style="margin-top:8px"><summary>📚 多综述管理（本地保存，按版本保存）</summary>
+      <div id="history" style="margin-top:6px"></div>
+    </details>
+  </div>
+  <div class="card result-overview hidden" id="resultOverview" aria-live="polite"></div>
+
+  <!-- 第0步：主题界定 -->
+  <div class="card hidden pro-only" id="panel0">
+    <div class="flex"><h2><span class="step-no">第 0 步</span> 研究主题界定（任务卡确认）<span class="muted small">Topic Scoping &amp; Confirm</span></h2>
+      <span class="badge b-warn">需人工确认</span></div>
+    <div class="sub">系统先把你的问题写成结构化任务卡草稿，<b>请核对 / 修改后再运行</b> —— 避免"范围还没界定清楚就开始写综述"。</div>
+    <div id="confirmList"></div>
+    <div class="row">
+      <button class="primary" onclick="confirmRun()">确认无误，运行全流程</button>
+      <button class="ghost" onclick="editTaskCard()">我先编辑任务卡</button>
+    </div>
+    <div class="muted small" style="margin-top:8px">AI 辅助声明：本工作台仅辅助检索与撰写，主题界定、结论判断与署名由作者本人负责。</div>
+  </div>
+
+  <details class="card reference-help"><summary>使用指南 · 术语说明 · 数据库与接口</summary>
+  <!-- 使用说明 -->
+  <div class="card">
+    <h2 style="font-size:15px">📖 使用说明 / 名词解释 / 常见问题</h2>
+    <div class="sub">有疑问就点开对应的一条，无需全看。</div>
+    <details style="margin:6px 0">
+      <summary>① 这个工作台能做什么？</summary>
+      <div class="help">把"一句临床问题"变成"一份可信的证据综述"：检索式 → 检索筛选 → <b>逐条核验引用真假</b> → 精读，保留检索与筛选记录；断网时可查看已保存案例。</div>
+    </details>
+    <details style="margin:6px 0">
+      <summary>② 四个步骤分别在做什么？</summary>
+      <div class="help"><ol style="margin:4px 0 0 18px">
+        <li><b>检索式生成</b>：拆概念、匹配官方 MeSH 词、拼检索式；不确定的标「待核」，绝不编造。可勾选概念、查命中数、自动调优。</li>
+        <li><b>检索·筛选·综述</b>：按纳入/排除标准筛选，生成结构化综述与 PRISMA 流程图。</li>
+        <li><b>引用核验</b>：参考文献逐条查 Crossref/PubMed，报告「匹配/题录冲突/未检出/暂无法核验」，保留原始依据。</li>
+        <li><b>精读引擎</b>：用 SQ3R 对关键文献做证据锚定的精读。</li>
+      </ol></div>
+    </details>
+    <details style="margin:6px 0">
+      <summary>③ 名词解释</summary>
+      <div class="help"><ul style="margin:4px 0 0 18px">
+        <li><b>MeSH</b>：PubMed 官方医学主题词表。</li>
+        <li><b>待核</b>：未在官方词表精确命中，仅作自由词，需人工确认。</li>
+        <li><b>PICO</b>：P 人群 / I 干预 / C 对照 / O 结局。</li>
+        <li><b>PRISMA</b>：系统评价报告规范，其流程图记录检索到纳入的过程。</li>
+        <li><b>endotype（内型）</b>：按分子机制划分的疾病亚型。</li>
+        <li><b>SQ3R</b>：Survey–Question–Read–Recite–Review 五步精读法。</li>
+        <li><b>DOI</b>：文献"身份证号"；核验就是拿它查是否真实存在。</li>
+      </ul></div>
+    </details>
+    <details style="margin:6px 0">
+      <summary>④ 常见问题</summary>
+      <div class="help"><ul style="margin:4px 0 0 18px">
+        <li><b>检索式 0 命中？</b> 概念太多，取消勾选泛化词或点「自动调优」。</li>
+        <li><b>断网能用吗？</b> 断网时可查看已保存的真实案例；新的检索与外部题录核验需要联网。</li>
+        <li><b>能核验自己的文献吗？</b> 能，第 3 步粘贴题录 / DOI 列表 / BibTeX。</li>
+        <li><b>结果能导出吗？</b> 综述导出 Markdown/Word/RIS，PRISMA 图导出 PNG。</li>
+        <li><b>数据可靠吗？</b> 来源 NLM MeSH / OpenAlex / Semantic Scholar / Crossref / PubMed，仅供科研参考，不替代临床决策。</li>
+      </ul></div>
+    </details>
+    <details style="margin:6px 0">
+      <summary>⑤ 如何选择数据库？</summary>
+      <div class="help"><ul style="margin:4px 0 0 18px">
+        <li><b>PubMed</b>：生物医学首选，有 MeSH 主题词，查全查准。</li>
+        <li><b>Web of Science</b>：跨学科 + 引文分析（找研究脉络）。</li>
+        <li><b>Embase</b>：药物 / 器械 / 会议摘要强。</li>
+        <li><b>Scopus</b>：覆盖广，工程与计算机类 AI 期刊多。</li>
+        <li><b>Cochrane</b>：系统评价 / 循证医学证据。</li>
+        <li><b>CNKI / 万方</b>：中文文献（需机构权限）。</li>
+      </ul>
+      <p>本工作台用 MeSH + PubMed 生成检索式，并可在第 1 步「多库检索式」把检索式翻译到其它库。</p>
+      </div>
+    </details>
+  </div>
+
+  <!-- 术语百科 -->
+  <div class="card">
+    <h2 style="font-size:15px">术语百科（点词看解释）</h2>
+    <div class="sub">看不懂的专业词，点一下就有人话解释。</div>
+    <div class="glos">
+      <span class="term" data-t="mesh">MeSH</span>
+      <span class="term" data-t="pubmed">PubMed</span>
+      <span class="term" data-t="doi">DOI</span>
+      <span class="term" data-t="crossref">Crossref</span>
+      <span class="term" data-t="prisma">PRISMA</span>
+      <span class="term" data-t="pico">PICO</span>
+      <span class="term" data-t="endotype">endotype</span>
+      <span class="term" data-t="sq3r">SQ3R</span>
+      <span class="term" data-t="daishen">待核</span>
+      <span class="term" data-t="external">外部验证</span>
+      <span class="term" data-t="retract">撤稿</span>
+      <span class="term" data-t="halluc">幻觉引用</span>
+    </div>
+  </div>
+
+  <!-- 开发者 API -->
+  <div class="card pro-only">
+    <details>
+      <summary>🔌 开发者：API 接口（可被医院系统 / 科研平台二次集成）</summary>
+      <div class="help">
+        <p>本工作台是可本地部署的 REST 服务，接口如下：</p>
+        <ul>
+          <li><code>POST /api/run</code> 一键全流程 <code>{pico, online}</code></li>
+          <li><code>POST /api/mesh</code> 生成 MeSH 检索式 <code>{pico}</code></li>
+          <li><code>POST /api/count</code> 查 PubMed 命中数 <code>{query}</code></li>
+          <li><code>POST /api/tune</code> 自动调优检索式 <code>{items}</code></li>
+          <li><code>POST /api/review</code> 检索·筛选·综述 <code>{task_yaml}</code></li>
+          <li><code>POST /api/verify</code> 引用核验 <code>{refs, online}</code></li>
+          <li><code>GET /api/health</code> 组件自检</li>
+        </ul>
+        <p>示例：</p>
+        <pre>curl -X POST http://127.0.0.1:8130/api/run -H "Content-Type: application/json" -d "{\"online\":false}"</pre>
+        <p class="muted small">可私有化部署于内网，外部检索会向数据库发送检索式，AI整理会向模型服务发送所选题录与摘要；不应上传患者资料。账号体系与多用户为产品化阶段规划。</p>
+      </div>
+    </details>
+  </div>
+
+  </details>
+
+  <!-- 第1步 -->
+  <div class="card step-panel pro-only" id="panel1" data-step="1">
+    <div class="flex"><h2><span class="step-no">第 1 步</span> <span class="term" data-t="mesh">MeSH</span> 检索式生成 <span class="muted small">Search-String Builder</span></h2>
+      <span><span class="badge b-pend" id="s1badge">待运行</span>
+      <button class="ghost mini" onclick="runMesh()">重跑</button></span></div>
+    <div class="sub">生成 PubMed 专用 MeSH 检索式。概念勾选仅影响选择 PubMed 的检索；第 2 步的来源由任务卡 sources 指定，其他库使用各自 queries 或计划关键词，不会自动使用此式。</div>
+    <div class="beg beg-hint"><b>这步在干嘛：</b>把你那句话拆成关键词，翻译成 PubMed 能听懂的"标准词"。
+      取消 AND 概念会放宽问题范围，请确认是否仍符合研究目的；有结果不代表检索正确。</div>
+    <div id="p1body" class="hidden">
+      <div class="headline">概念选择（勾选要 AND 的概念；泛化词默认不勾，避免 0 命中）</div>
+      <div class="toolbar">
+        <button class="ghost mini" onclick="selectPreset('core')">仅核心概念</button>
+        <button class="ghost mini" onclick="selectPreset('all')">全选</button>
+        <button class="ghost mini" onclick="selectPreset('none')">全不选</button>
+        <button class="primary mini" onclick="rebuildQuery()">重建检索式</button>
+        <button class="ghost mini" onclick="checkCount()">查 PubMed 命中数</button>
+        <button class="ghost mini" onclick="autoTune()">自动调优</button>
+        <button class="ghost mini pro-only" onclick="multiDb()">多库检索式</button>
+        <span id="countBox" class="muted small"></span>
+      </div>
+      <table id="chunks"></table>
+      <div class="flex" style="margin-top:12px"><div class="headline">检索式（可直接粘贴 PubMed）</div>
+        <span><button class="ghost mini" onclick="copyQuery()">复制</button>
+        <a id="pubmed" target="_blank" rel="noopener"
+           style="text-decoration:none;display:inline-block;background:#e5efec;color:var(--accent);
+                  border-radius:9px;padding:6px 13px;font-size:12.5px;font-weight:600;margin-left:6px"
+           href="https://pubmed.ncbi.nlm.nih.gov/">在 PubMed 打开</a></span></div>
+      <pre id="q"></pre>
+      <div id="diag" class="small" style="margin-top:6px"></div>
+      <div id="multidb"></div>
+    </div>
+  </div>
+
+  <!-- 第2步 -->
+  <div class="card step-panel" id="panel2" data-step="2">
+    <div class="flex"><h2><span class="step-no">第 2 步</span> 检索 · 筛选 · 综述 <span class="muted small">Search · Screen · Review</span></h2>
+      <span><span class="badge b-pend" id="s2badge">待运行</span>
+      <button class="ghost mini" onclick="runReview()">重跑</button></span></div>
+    <div class="sub" id="p2sub"></div>
+    <div class="beg beg-hint"><b>这步在干嘛：</b>从一大堆论文里挑出相关的，写成一份"带出处的草稿"，
+      查看逐篇筛选理由、摘要原文与题录核对结果。</div>
+    <div id="p2body" class="hidden">
+      <details class="pro-only"><summary>获取与筛选记录 · 每批来源、实际查询与流程</summary>
+      <div class="flex pro-only"><div class="headline">本批获取与初筛流程（非完整 PRISMA 报告）</div>
+        <button class="ghost mini" onclick="exportPrisma()">导出 PRISMA 图 (PNG)</button></div>
+      <div class="pro-only" id="prisma"></div>
+      <div class="pro-only" id="planBox"></div>
+      </details>
+      <div id="evidence"></div>
+      <div id="literatureDesk" class="desk hidden"></div>
+      <div id="synthesisPanel" class="synthesis-card hidden"></div>
+      <details class="pro-only"><summary>材料分布与内部检查记录</summary>
+      <div class="grid2 pro-only" style="margin-top:12px">
+        <div>
+          <div class="headline">材料稿文献年份分布</div>
+          <div class="bars" id="yearbars"></div>
+        </div>
+        <div>
+          <div class="headline">来源分布</div>
+          <div id="srcs"></div>
+          <div class="tiles" id="tiles2"></div>
+        </div>
+      </div>
+      <div class="pro-only" id="internal"></div>
+      <div class="pro-only" id="trust"></div>
+      <div class="pro-only" id="artifacts"></div>
+      </details>
+      <div class="headline pro-only">综述正文</div>
+      <div class="pro-only" id="reviewSections"></div>
+      <div class="headline pro-only">材料稿文献（逐条标明纳入状态）</div>
+      <ol class="small pro-only" id="refList"></ol>
+      <div class="pro-only" id="eva"></div>
+      <div id="excludedWrap" class="hidden pro-only">
+      <div class="headline">存疑 / 排除文献及原因（存疑不等于不相关）</div>
+        <table id="excTable"></table>
+      </div>
+      <details class="pro-only">
+        <summary>高级：编辑任务卡（YAML）后重跑第 2 步</summary>
+        <textarea id="yaml" rows="14" style="margin-top:8px"></textarea>
+        <div class="row"><button class="primary mini" onclick="runReview()">用此任务卡重跑</button></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- 第3步 -->
+  <div class="card step-panel" id="panel3" data-step="3">
+    <div class="flex"><h2><span class="step-no">第 3 步</span> 引用真实性核验 <span class="muted small">Citation Verification</span></h2>
+      <span><span class="badge b-pend" id="s3badge">待运行</span>
+      <button class="ghost mini" onclick="runVerify()">核验</button></span></div>
+    <div class="sub">逐条查 <span class="term" data-t="crossref">Crossref</span>（404 回退 <span class="term" data-t="pubmed">PubMed</span>），判定：通过 / 指向他文 / 查无此文 / 解析失败。可粘贴整份参考文献或 BibTeX 批量核验。</div>
+    <div class="beg beg-hint"><b>这步在干嘛：</b>拿每条引用的"身份证号"(DOI) 去官方数据库查——它真的存在吗？
+      题录冲突或未检出时保留具体原因，仍需人工核查。也可以粘贴自己的参考文献。</div>
+    <div id="p3body" class="hidden">
+      <div class="headline">核验结果汇总</div>
+      <div class="stack" id="vstack"></div>
+      <div id="compare"></div>
+      <div id="verdicts"></div>
+      <div id="offlineNote" class="muted small hidden"></div>
+    </div>
+    <details open>
+      <summary>参考文献（支持三种粘贴格式）</summary>
+      <div class="muted small" style="margin-top:6px">
+        ① 整份参考文献：每行一条 `作者 | 年份 | DOI | 题名`；<br>
+        ② 直接粘贴 DOI 列表/含 DOI 的行（自动识别 <code>10.xxxx/...</code>）；<br>
+        ③ 直接粘贴 <b>BibTeX</b>（自动解析 title/author/year/doi）。
+      </div>
+      <textarea id="refs" rows="7" style="margin-top:8px"></textarea>
+      <div class="row">
+        <button class="primary mini" onclick="runVerify()">核验这些文献</button>
+        <button class="ghost mini" onclick="loadBibDemo()">载入 BibTeX 示例</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- 第4步 -->
+  <div class="card step-panel pro-only" id="panel4" data-step="4">
+    <div class="flex"><h2><span class="step-no">第 4 步</span> SQ3R 精读引擎 <span class="muted small">Close-Reading Engine</span></h2>
+      <span><span class="badge b-pend" id="s4badge">待运行</span>
+      <button class="ghost mini" onclick="runSq3r()">重跑</button></span></div>
+    <div class="sub" id="p4sub"></div>
+    <div class="beg beg-hint"><b>这步在干嘛：</b>教你用一套固定方法（SQ3R：浏览→提问→精读→复述→回顾）
+      把一篇论文读透，而不是只看标题和摘要。</div>
+    <div id="p4body" class="hidden">
+      <div class="headline">五步流程</div>
+      <div id="sqsteps"></div>
+      <p class="para muted small" id="sqdesc"></p>
+      <div id="sqReading"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  数据来源：NLM MeSH（官方词表）、OpenAlex、Semantic Scholar、Crossref、PubMed。
+  系统依据第三方记录初步核验，仅供科研参考，不替代专业人员复核与临床诊疗决策。
+  演示语料与真实检索隔离；查询失败保留错误，不用缓存示例替代核验。
+</footer>
+
+
+<div id="pop" class="hidden"></div>
+
+<div id="tour" class="hidden">
+  <div class="tour-box">
+    <div class="muted small" id="tourStep"></div>
+    <h3 id="tourTitle"></h3>
+    <div class="para" id="tourBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="ghost mini" onclick="tourPrev()">上一步</button>
+      <button class="primary mini" id="tourNextBtn" onclick="tourNext()">下一步</button>
+      <button class="ghost mini" onclick="tourClose()">跳过 / 关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':'&quot;',"'":'&#39;'}[c]));
+let QUERY = "", LAST_RESULT = null, LAST_VERIFY = null, LAST_INTERNAL = null, LAST_ART = null, CHUNKS = [];
+let MODE = "pro", ALL_EXAMPLES = [];
+let LAST_EVIDENCE = null;
+let TASK_PICO = "";
+let CURRENT_RUN = null, LAST_SNAPSHOT = null, BOUND_REFS = "", REVIEW_SEQ = 0, VERIFY_SEQ = 0;
+let DESK_PAGE=0, STAGED_DECISIONS={}, SYNTHESIS_CAPABILITY=null, MODEL_SEQ=0;
+
+
+/* 若直接双击打开（file://），则把请求指向本地后端；否则用同源相对路径 */
+const API = (location.protocol === "file:") ? "http://127.0.0.1:8130" : "";
+if(location.protocol === "file:") $("warn").classList.remove("hidden");
+
+const VERDICT_CLS = {
+  "通过":"b-ok","确定":"b-ok","匹配":"b-ok",
+  "待核":"b-warn","unmatched":"b-warn","指向他文":"b-bad",
+  "查无此文":"b-bad","解析失败":"b-mut","matched":"b-ok"
+};
+function badge(v){ return `<span class="badge ${VERDICT_CLS[v]||"b-mut"}">${esc(v||"—")}</span>`; }
+
+function setStep(n, state, text){
+  const tl = document.querySelector(`.tl[data-step="${n}"]`);
+  if(tl){ tl.classList.remove("run","done","fail"); if(state) tl.classList.add(state); }
+  const b = $("s"+n+"badge");
+  if(b){ b.className = "badge " + (state==="done"?"b-ok":state==="fail"?"b-bad":
+    state==="run"?"b-warn":"b-pend");
+    b.textContent = text || (state==="done"?"完成":state==="fail"?"失败":
+      state==="run"?"运行中…":"待运行"); }
+}
+function spin(n){ const b=$("s"+n+"badge"); b.className="badge b-warn"; b.innerHTML='<span class="spin"></span> 运行中…'; }
+
+async function post(url, body){
+  let r;
+  try{
+    r = await fetch(API+url,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body||{})});
+  }catch(e){
+    throw new Error("无法连接后端（"+API+url+"）。请确认已运行 python serve.py，"+
+      "并用 http://127.0.0.1:8130/ 打开页面。");
+  }
+  const data=await r.json();
+  if(!r.ok) throw new Error(data.error||"后端返回 HTTP "+r.status);
+  return data;
+}
+
+/* ---------- Research overview / review desk / grounded drafting ---------- */
+function renderOverview(){
+  const el=$("resultOverview"),r=LAST_RESULT;
+  if(!r){el.classList.add("hidden");return;}
+  const st=r.stats||{}, e=LAST_EVIDENCE||{}, v=LAST_VERIFY&&LAST_VERIFY.run_id===CURRENT_RUN?LAST_VERIFY:null;
+  const passed=v?(v.refs||[]).filter(x=>x.verdict==="通过").length:null;
+  const replay=r.replay||LAST_SNAPSHOT?.replay;
+  el.classList.remove("hidden");
+  el.innerHTML=(replay?`<div class="replay-banner"><b>真实案例回放</b> · 原始检索：${esc(replay.recorded_at||"见来源记录")}<br>${esc(replay.note||"本次未重新查询数据库或模型。")}原始运行 ${esc((replay.original_run_id||"").slice(0,12))}，可按现有任务卡重新实时检索。</div>`:"")+
+    `<div class="result-heading">RESEARCH BRIEF <span class="tag ${r.status==='partial'?'warm':''}">${r.status==='partial'?'部分来源成功':r.status==='failed'?'检索失败':'研究材料已保存'}</span></div><h2>${esc(r.topic)}</h2>`+
+    `<div class="metrics-grid">${[[st.retrieved??st.hit??0,'实际获取题录'],[st.dedup??0,'去重后保留'],[st.adopted??0,'推荐阅读文献'],[e.direct??0,'直接相关线索'],[passed===null?'—':passed,'题录核对通过']].map(([n,l],i)=>`<div class="metric ${i===2?'highlight':''}"><strong>${esc(n)}</strong><span>${esc(l)}</span></div>`).join("")}</div>`+
+    `<div class="flex"><span class="small muted">${esc((r.search||[]).map(s=>s.source).join(' + '))} · ${esc((r.created_at||'').slice(0,16).replace('T',' '))} · 运行 ${esc((CURRENT_RUN||'').slice(0,8))}</span><span class="tag">${r.synthesis?.provider==='claude-cli'?'AI中文初稿已生成':'摘要材料已整理'}</span></div>`+
+    `<div class="quiet-note">直接相关 ${e.direct||0} 篇，背景或方法参考 ${e.background||0} 篇。推荐清单用于研究导读；篇数不代表结论已被证明，题录核对通过也不等于主张通过。</div>`+
+    `<div class="row"><button class="primary mini" onclick="document.getElementById('literatureDesk').scrollIntoView({behavior:'smooth'})">查看推荐与筛选</button><button class="ghost mini" onclick="downloadReview()">导出研究材料</button><button class="ghost mini" onclick="downloadEvidenceBundle()">导出证据包 ZIP</button></div>`;
+}
+async function downloadEvidenceBundle(){
+  if(!CURRENT_RUN)return;
+  try{const response=await fetch(API+'/api/export?id='+encodeURIComponent(CURRENT_RUN));if(!response.ok)throw new Error('证据包读取失败');const blob=await response.blob();const anchor=document.createElement('a');anchor.href=URL.createObjectURL(blob);anchor.download='研究证据包_'+CURRENT_RUN.slice(0,8)+'.zip';anchor.click();setTimeout(()=>URL.revokeObjectURL(anchor.href),1000);}catch(e){$("globalStatus").textContent=e.message;}
+}
+async function loadTaskSettings(){
+  $("taskSettings").open=true;
+  try{const d=await post('/api/task',{task_yaml:$("yaml").value});if(!d.ok)throw new Error(d.error);const t=d.task;
+    $("taskTopic").value=t.topic||'';$("taskYears").value=t.years||'';$("taskMax").value=Math.max(5,Math.min(20,t.max_papers||12));$("taskQuestions").value=(t.must_answer||[]).join('\n');
+    for(const [id,source] of [['sourcePubmed','pubmed'],['sourceOpenalex','openalex'],['sourceSemantic','semantic_scholar']])$(id).checked=(t.sources||[]).includes(source);
+    $("taskForm").classList.remove('hidden');$("taskSettingsStatus").textContent='自定义检索式与高级筛选条件会保留在任务卡中。';
+  }catch(e){$("globalStatus").textContent=e.message;}
+}
+async function applyTaskSettings(){
+  try{const updates={topic:$("taskTopic").value.trim(),years:$("taskYears").value.trim(),max_papers:Number($("taskMax").value),
+      sources:[['sourcePubmed','pubmed'],['sourceOpenalex','openalex'],['sourceSemantic','semantic_scholar']].filter(([id])=>$(id).checked).map(([,s])=>s),must_answer:$("taskQuestions").value.split('\n').map(s=>s.trim()).filter(Boolean)};
+    const d=await post('/api/task',{task_yaml:$("yaml").value,updates});if(!d.ok)throw new Error(d.error);
+    resetResearch();$("yaml").value=d.task_yaml;$("pico").value=updates.topic;TASK_PICO=updates.topic;QUERY='';CHUNKS=[];
+    $("taskSettingsStatus").textContent='设置已更新，点击“运行全流程”开始新的检索。';$("globalStatus").textContent='已确认新的任务卡。';
+  }catch(e){$("taskSettingsStatus").textContent=e.message;}
+}
+function allScreened(){
+  const groups=LAST_RESULT?.screening||{};
+  return ['included','uncertain','excluded'].flatMap(k=>groups[k]||[]);
+}
+function deskRecords(){
+  const text=($("deskSearch")?.value||'').toLowerCase(),filter=$("deskFilter")?.value||'recommended';
+  const selected=new Set((LAST_RESULT?.references||[]).map(p=>p.record_id));
+  return allScreened().filter(p=>{
+    const decision=STAGED_DECISIONS[p.record_id]?.decision||p.decision;
+    return (filter==='all'||filter==='recommended'&&selected.has(p.record_id)||decision===filter)&&
+      (!text||[p.title,p.abstract,p.venue,p.source,p.doi].join(' ').toLowerCase().includes(text));
+  });
+}
+function renderDesk(){
+  const el=$("literatureDesk");
+  if(!LAST_RESULT){el.classList.add('hidden');return;}
+  el.classList.remove('hidden');
+  el.innerHTML=`<div class="desk-head"><div class="flex"><div class="headline">文献工作区 <span class="muted small">按需阅读，保留每一步判断</span></div><button class="ghost mini" onclick="exportScreening()">导出全部筛选表</button></div><div class="desk-tools"><input type="text" id="deskSearch" aria-label="搜索已获取文献" placeholder="搜索题名、摘要、DOI或来源"><select id="deskFilter" aria-label="文献筛选状态"><option value="recommended">推荐阅读</option><option value="all">全部题录</option><option value="included">初筛相关</option><option value="uncertain">存疑待核</option><option value="excluded">已排除</option></select></div><div id="deskStatus" class="small muted" style="margin-top:8px"></div></div><div id="deskRows"></div><div class="desk-footer"><span id="deskCount"></span><span><button class="ghost mini" id="deskPrev">上一页</button> <button class="ghost mini" id="deskNext">下一页</button></span><button class="primary mini" id="saveDecisions" onclick="saveScreening()" disabled>保存人工复核为新版本</button></div>`;
+  $("deskSearch").addEventListener('input',()=>{DESK_PAGE=0;renderDeskRows();});
+  $("deskFilter").addEventListener('change',()=>{DESK_PAGE=0;renderDeskRows();});
+  $("deskPrev").onclick=()=>{DESK_PAGE=Math.max(0,DESK_PAGE-1);renderDeskRows();};
+  $("deskNext").onclick=()=>{DESK_PAGE++;renderDeskRows();};
+  renderDeskRows();
+}
+function renderDeskRows(){
+  const rows=deskRecords(), pageSize=10, selected=new Set((LAST_RESULT?.references||[]).map(p=>p.record_id));
+  DESK_PAGE=Math.min(DESK_PAGE,Math.max(0,Math.ceil(rows.length/pageSize)-1));
+  $("deskRows").innerHTML=rows.length?rows.slice(DESK_PAGE*pageSize,(DESK_PAGE+1)*pageSize).map((p,i)=>{
+    const pending=STAGED_DECISIONS[p.record_id],decision=pending?.decision||p.decision,a=p.question_assessment||{};
+    return `<article class="paper-row"><div class="paper-top"><div class="paper-index">${DESK_PAGE*pageSize+i+1}</div><div class="paper-main"><div class="paper-title">${esc(p.title)} ${fulltextLinks(p)}</div><div class="paper-meta">${esc(p.year||'年份待核')} · ${esc(p.venue||p.source||'')} · ${esc((p.authors||[]).slice(0,3).join('、'))}</div><div>${selected.has(p.record_id)?'<span class="tag">推荐阅读</span>':''}<span class="tag ${decision==='uncertain'?'warm':decision==='excluded'?'gray':''}">${esc({included:'初筛相关',uncertain:'存疑待核',excluded:'已排除'}[decision]||decision)}</span>${a.role_label?`<span class="tag gray">${esc(a.role_label)}</span>`:''}${p.manual_review?'<span class="tag">已有人工复核</span>':''}${p.source_record?.type==='preprint'?'<span class="tag warm">预印本 · 未确认同行评审</span>':''}</div><div class="paper-reason">${esc(a.reason||p.reason||'材料待确认')}</div><details><summary>阅读摘要与筛选依据</summary><p>${esc(p.abstract||'来源未返回摘要，请打开题录记录核查。')}</p><div class="paper-reason">系统初判：${esc(p.system_reason||p.reason||'')}<br>来源：${esc((p.retrieved_from||[p.source]).join(' / '))} · DOI：${esc(p.doi||'未提供')}<br>全文状态：${esc(p.fulltext_status||'全文待核')}</div></details><div class="paper-actions"><span class="small muted">人工复核：</span>${[['included','纳入'],['uncertain','存疑'],['excluded','排除']].map(([v,label])=>`<button class="ghost ${pending?.decision===v?'active':''}" data-paper="${esc(p.record_id)}" data-decision="${v}">${label}</button>`).join('')}${pending?`<button class="ghost" data-undo="${esc(p.record_id)}">撤回本次修改</button>`:''}</div>${pending?`<input class="review-reason" type="text" data-reason="${esc(p.record_id)}" aria-label="人工复核理由" placeholder="填写你作出这一判断的理由后保存" value="${esc(pending.reason)}">`:''}</div></div></article>`;
+  }).join(''):'<div class="empty-state"><strong>当前条件下没有文献</strong>可以切换到“全部题录”，或调整搜索关键词。</div>';
+  $("deskRows").querySelectorAll('button[data-paper]').forEach(b=>b.onclick=()=>{const id=b.dataset.paper;STAGED_DECISIONS[id]={decision:b.dataset.decision,reason:STAGED_DECISIONS[id]?.reason||''};renderDeskRows();});
+  $("deskRows").querySelectorAll('button[data-undo]').forEach(b=>b.onclick=()=>{delete STAGED_DECISIONS[b.dataset.undo];renderDeskRows();});
+  $("deskRows").querySelectorAll('input[data-reason]').forEach(input=>input.oninput=()=>{STAGED_DECISIONS[input.dataset.reason].reason=input.value;updateDeskStatus();});
+  $("deskCount").textContent=`当前 ${rows.length} 条 · 第 ${DESK_PAGE+1}/${Math.max(1,Math.ceil(rows.length/pageSize))} 页`;
+  $("deskPrev").disabled=DESK_PAGE===0;$("deskNext").disabled=(DESK_PAGE+1)*pageSize>=rows.length;
+  updateDeskStatus();
+}
+function updateDeskStatus(){
+  const staged=Object.values(STAGED_DECISIONS),incomplete=staged.some(d=>!d.reason.trim());
+  $("deskStatus").textContent=staged.length?`待保存 ${staged.length} 条复核${incomplete?'；请补充复核理由':''}。保存会生成新版本，保留当前稿。`:'可打开原始题录，阅读摘要，并对筛选状态作出人工复核。';
+  $("saveDecisions").disabled=!staged.length||incomplete;
+}
+async function saveScreening(){
+  const run=CURRENT_RUN,seq=REVIEW_SEQ;$("saveDecisions").disabled=true;
+  try{
+    const d=await post('/api/screen',{run_id:run,decisions:STAGED_DECISIONS});
+    if(seq!==REVIEW_SEQ||run!==CURRENT_RUN)return;
+    if(!d.ok)throw new Error(d.error||'复核未保存');
+    renderReviewResponse(d);await saveHistory();$("globalStatus").textContent='人工复核已保存为新版本；本版题录需重新核对。';
+  }catch(e){$("deskStatus").textContent=e.message;$("saveDecisions").disabled=false;}
+}
+function exportScreening(){
+  if(!LAST_RESULT)return;
+  const keys=['record_id','title','year','source','doi','decision','reason','record_url'];
+  const cell=x=>{let s=String(x??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
+  const csv='\ufeff'+[keys,...allScreened().map(p=>keys.map(k=>p[k]))].map(row=>row.map(cell).join(',')).join('\r\n');
+  dl('文献筛选表_'+(CURRENT_RUN||'').slice(0,8)+'.csv',csv,'text/csv;charset=utf-8');
+}
+async function executeJob(route,payload,title,isCurrent){
+  const started=await post(route,payload);if(!started.ok)throw new Error(started.error||'未能启动任务');
+  $("jobPanel").classList.remove('hidden');$("jobTitle").textContent=title;$("jobEvents").innerHTML='';
+  for(let attempt=0;attempt<600;attempt++){
+    if(isCurrent&&!isCurrent())return null;
+    const j=await (await fetch(API+'/api/jobs?id='+encodeURIComponent(started.job_id))).json();
+    if(!j.ok)throw new Error(j.error||'任务状态读取失败');
+    $("jobElapsed").textContent=`已用时 ${j.elapsed_seconds||0} 秒`;
+    $("jobEvents").innerHTML=(j.events||[]).slice(-6).map(ev=>`<li><time>${esc(ev.at)}s</time>${esc(ev.message||'')}</li>`).join('');
+    if(j.status==='succeeded'||j.status==='failed'){$("jobTitle").textContent=j.status==='succeeded'?'本次任务已完成':'本次任务未完成';return j.result;}
+    await new Promise(resolve=>setTimeout(resolve,900));
+  }
+  throw new Error('等待超时，已完成的研究可从历史记录恢复。');
+}
+function renderSynthesis(){
+  const el=$("synthesisPanel");if(!LAST_RESULT?.references?.length){el.classList.add('hidden');return;}
+  el.classList.remove('hidden');
+  const document=LAST_RESULT.synthesis,available=SYNTHESIS_CAPABILITY?.available;
+  el.innerHTML=`<div class="flex"><div class="headline">从文献材料到综述初稿</div><span class="tag">${document?.provider==='claude-cli'?'Claude Code · 摘要级初稿':document?'摘要原句整理':'先选文献，再整理结论'}</span></div><p>围绕本次研究问题，比较已有方法与结果。AI初稿的每个段落附上文献编号和摘要原句，可展开逐段核对。</p><div class="row"><button class="primary mini" onclick="runSynthesis('claude-cli')" ${available?'':'disabled'}>AI 生成中文综述初稿</button><button class="ghost mini" onclick="runSynthesis('extractive')">仅整理摘要原句</button><span class="small muted">${esc(SYNTHESIS_CAPABILITY?.note||'正在检查本地AI工具…')}</span></div><div id="synthesisStatus" class="small muted" role="status" style="margin-top:8px">${document?esc(document.validation?.note||'逐段依据已保存，仍需人工核查含义。'):'点击AI生成时，将向本机Claude Code配置的模型服务发送本次选中文献的题录与摘要，并使用其额度。'}</div>`;
+}
+async function runSynthesis(provider){
+  if(!CURRENT_RUN)return;
+  const run=CURRENT_RUN,seq=++MODEL_SEQ;
+  $("synthesisStatus").textContent='正在整理，原检索结果将保留…';
+  $("synthesisPanel").querySelectorAll('button').forEach(b=>b.disabled=true);
+  try{
+    const d=await executeJob('/api/jobs/synthesis',{run_id:run,provider},'正在生成综述与逐段依据',()=>seq===MODEL_SEQ&&run===CURRENT_RUN);
+    if(!d)return;if(!d.ok)throw new Error(d.error||'生成未完成');
+    renderReviewResponse(d);await saveHistory();$("globalStatus").textContent='已保存新的综述版本；可以展开段落下方的摘要依据逐条核查。';
+    $("reviewSections").scrollIntoView({behavior:'smooth'});
+  }catch(e){if(seq===MODEL_SEQ){renderSynthesis();$("synthesisStatus").textContent=e.message;}}
+}
+function synthesisHtml(document){
+  if(!document)return '';
+  return '<div class="synthesis-document">'+document.sections.map(s=>`<h3>${esc(s.heading)}</h3>`+s.paragraphs.map(p=>`<p class="para">${citeHtml(p.text+' '+[...new Set(p.evidence.map(a=>'['+a.n+']'))].join(''),LAST_RESULT.references||[])}</p><details><summary>核对本段依据 · ${p.evidence.length} 处摘要原句</summary>${p.evidence.map(a=>`<div class="anchor-quote"><div class="quote-source">文献 [${esc(a.n)}] · 摘要原文</div>${esc(a.quote)}</div>`).join('')}</details>`).join('')).join('')+'<h3>适用范围与待核事项</h3><ul class="small">'+(document.limitations||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
+}
+async function loadWorkbenchExtras(){
+  try{const d=await (await fetch(API+'/api/capabilities')).json();if(d.ok){SYNTHESIS_CAPABILITY=d.synthesis;if(LAST_RESULT)renderSynthesis();}}catch(e){}
+  try{const d=await (await fetch(API+'/api/cases')).json();if(!d.ok)throw new Error(d.error);const el=$("caseButtons");el.innerHTML='';for(const c of d.cases||[]){const b=document.createElement('button');b.className='ghost mini';b.textContent='回放 · '+c.title;b.onclick=()=>replayCase(c.id);el.appendChild(b);}$("casePanel").classList.toggle('hidden',!(d.cases||[]).length);}catch(e){$("casePanel").classList.add('hidden');}
+}
+async function replayCase(id){
+  $("globalStatus").textContent='正在打开已保存的真实研究案例…';
+  try{const d=await post('/api/cases/replay',{case_id:id});if(!d.ok)throw new Error(d.error);resetResearch();
+    $("pico").value=d.pico||d.result.topic;TASK_PICO=$("pico").value;$("yaml").value=d.task_yaml;QUERY=d.query||'';$("q").textContent=QUERY;
+    renderReviewResponse(d);await saveHistory();$("globalStatus").textContent='已打开真实案例回放，未进行新的数据库查询。';$("resultOverview").scrollIntoView({behavior:'smooth'});
+  }catch(e){$("globalStatus").textContent='案例打开失败：'+e.message;}
+}
+
+/* ---------- 第1步 ---------- */
+async function runMesh(){
+  spin(1);
+  try{
+    const d = await post("/api/mesh",{pico:$("pico").value});
+    if(!d.ok){ setStep(1,"fail",d.error); return false; }
+    CHUNKS = d.chunks||[];
+    $("p1body").classList.remove("hidden");
+    let rows="<tr><th style='width:44px'>选用</th><th>概念片段</th><th>状态</th>"+
+      "<th>命中 MeSH 词</th><th>选词依据</th></tr>";
+    CHUNKS.forEach((c,i)=>{
+      const checked=(c.matched && !c.generic)?"checked":"";
+      rows+=`<tr><td style="text-align:center">
+        <input type="checkbox" class="ck" data-i="${i}" ${checked} onchange="rebuildQuery()"></td>
+        <td>${esc(c.text)}</td><td>${badge(c.status)}</td>
+        <td>${c.mesh?esc(c.mesh)+' <span class="muted small">('+esc(c.ui)+')</span>':'<span class="muted">仅自由词</span>'}</td>
+        <td class="muted small">${esc(c.basis||c.note||"")}${c.generic?' <span class="badge b-warn">泛化词</span>':''}</td></tr>`;
+    });
+    $("chunks").innerHTML=rows;
+    rebuildQuery();
+    setStep(1,"done",`完成 · ${CHUNKS.length} 个概念（已勾选 ${selectedCount()}）`);
+    if($("online").checked) checkCount();
+    return true;
+  }catch(e){ setStep(1,"fail",e.message); return false; }
+}
+function selectedCount(){ return document.querySelectorAll("#chunks .ck:checked").length; }
+function selectPreset(kind){
+  document.querySelectorAll("#chunks .ck").forEach(cb=>{
+    const c=CHUNKS[+cb.dataset.i]||{};
+    cb.checked = kind==="all" ? true : kind==="none" ? false : !!(c.matched && !c.generic);
+  });
+  rebuildQuery();
+}
+function rebuildQuery(){
+  const parts=[];
+  document.querySelectorAll("#chunks .ck").forEach(cb=>{
+    if(cb.checked){ const c=CHUNKS[+cb.dataset.i]; if(c && c.clause) parts.push(c.clause); }
+  });
+  QUERY = parts.join("\n  AND ");
+  $("q").textContent = QUERY || "(未选择任何概念：请至少勾选 1 个)";
+  // 单行版（用于 URL / PubMed），去掉换行，避免 PubMed 报 "term … required"
+  const flat = parts.join(" AND ").replace(/\s+/g," ").trim();
+  const link=$("pubmed");
+  if(parts.length){
+    link.href="https://pubmed.ncbi.nlm.nih.gov/?term="+encodeURIComponent(flat);
+    link.style.opacity="1"; link.style.pointerEvents="auto";
+  } else {
+    link.href="#"; link.style.opacity=".5"; link.style.pointerEvents="none";
+  }
+  link.dataset.query=flat;
+  const box=$("countBox"); if(box) box.textContent="";
+  // 离线结构自检
+  const diag=[];
+  if(parts.length===0) diag.push('<span class="badge b-warn">自检</span> 未选择任何概念。');
+  else{
+    diag.push('<span class="badge b-mut">表达式</span> 当前 AND '+parts.length+' 个概念；未验证检索质量。MeSH 选择仅用于 PubMed，其他库的实际请求见第 2 步。');
+  }
+  $("diag").innerHTML = diag.join(" ");
+  setStep(1,"done",`已勾选 ${selectedCount()} 个概念`);
+}
+async function checkCount(){
+  const box=$("countBox");
+  if(!QUERY){ box.textContent="请先选择概念"; return; }
+  box.innerHTML='<span class="spin"></span> 查询中…';
+  try{
+    const d=await post("/api/count",{query:QUERY,task_yaml:$("yaml").value});
+    if(!d.ok){ box.innerHTML='<span class="badge b-mut">离线</span> '+esc(d.error||""); return; }
+    box.innerHTML=`<span class="badge b-mut">PubMed 报告总匹配 ${d.count.toLocaleString()} 条</span> `+
+      `<span class="muted small">${esc(d.hint||"")}</span>`;
+  }catch(e){ box.innerHTML='<span class="badge b-mut">离线</span> 无法查询命中数'; }
+}
+async function autoTune(){
+  const sel=[];
+  document.querySelectorAll("#chunks .ck:checked").forEach(cb=>{
+    const i=+cb.dataset.i, c=CHUNKS[i];
+    if(c && c.clause) sel.push({i:i, text:c.text, clause:c.clause});
+  });
+  if(sel.length<2){ $("countBox").textContent="至少勾选 2 个概念再调优"; return; }
+  const box=$("countBox");
+  box.innerHTML='<span class="spin"></span> 自动调优中…（需联网，约 10–20 秒）';
+  try{
+    const d=await post("/api/tune",{items:sel});
+    if(!d.ok){ box.innerHTML='<span class="badge b-mut">失败</span> '+esc(d.error||""); return; }
+    const keep=new Set(d.keep);
+    document.querySelectorAll("#chunks .ck").forEach(cb=>{ cb.checked=keep.has(+cb.dataset.i); });
+    rebuildQuery();
+    box.innerHTML=`<span class="badge b-warn">放宽建议已应用 · PubMed 总匹配 ${Number(d.count).toLocaleString()} 条（未限年份）</span> `+
+      `<span class="muted small">${(d.removed&&d.removed.length)?("已移除："+esc(d.removed.join("、"))):"未移除概念"}；请确认研究范围，增加匹配数不等于改善质量。</span>`;
+  }catch(e){ box.innerHTML='<span class="badge b-mut">离线</span> 自动调优需要联网'; }
+}
+function copyQuery(){
+  if(!QUERY) return;
+  navigator.clipboard?.writeText(QUERY).then(()=>$("globalStatus").textContent="检索式已复制").catch(()=>{});
+}
+function copyText(txt,label){
+  navigator.clipboard?.writeText(txt).then(()=>$("globalStatus").textContent=(label||"")+"已复制").catch(()=>{});
+}
+function _parseClause(clause){
+  const mesh=[], free=[];
+  let m; const rM=/"([^"]+)"\[MeSH Terms[^\]]*\]/g, rF=/"([^"]+)"\[Title\/Abstract\]/g;
+  while((m=rM.exec(clause||""))) mesh.push(m[1]);
+  while((m=rF.exec(clause||""))) free.push(m[1]);
+  return {mesh:mesh, free:free};
+}
+function multiDb(){
+  const sel=[];
+  document.querySelectorAll("#chunks .ck:checked").forEach(cb=>{ const c=CHUNKS[+cb.dataset.i]; if(c) sel.push(c); });
+  if(!sel.length){ $("multidb").innerHTML="<p class='muted small'>请先勾选概念。</p>"; return; }
+  const cs=sel.map(c=>_parseClause(c.clause));
+  const q=x=>'"'+x+'"';
+  const base=(c)=>c.mesh.map(x=>x.split("/")[0]).concat(c.free);
+  const pubmed=cs.map(c=>"("+c.mesh.map(x=>q(x)+"[MeSH Terms]").concat(c.free.map(x=>q(x)+"[tiab]")).join(" OR ")+")").join(" AND ");
+  const embase=cs.map(c=>"("+base(c).map(x=>"'"+x+"':ti,ab,kw").join(" OR ")+")").join(" AND ");
+  const wos=cs.map(c=>"TS=("+base(c).map(x=>'"'+x+'"').join(" OR ")+")").join(" AND ");
+  const scopus=cs.map(c=>"TITLE-ABS-KEY("+base(c).map(x=>'"'+x+'"').join(" OR ")+")").join(" AND ");
+  const cochrane=cs.map(c=>"("+base(c).map(x=>'"'+x+'"').join(" OR ")+"):ti,ab,kw").join(" AND ");
+  const dbs=[["PubMed（原库）",pubmed,"可直接粘贴"],
+             ["Embase（Elsevier）",embase,"MeSH 需人工翻译为 Emtree"],
+             ["Web of Science",wos,"TS= 主题检索（本库无主题词表）"],
+             ["Scopus",scopus,"TITLE-ABS-KEY"],
+             ["Cochrane CENTRAL",cochrane,":ti,ab,kw"]];
+  $("multidb").innerHTML=
+    `<div class="headline">多库检索式翻译（字段已改写，主题词需人工核对）</div>`+
+    dbs.map((d,i)=>`<details style="margin:6px 0"><summary>${esc(d[0])} · <span class="muted small">${esc(d[2])}</span></summary>
+      <pre>${esc(d[1])}</pre>
+      <div class="row"><button class="ghost mini" data-copy="${i}">复制 ${esc(d[0])}</button></div></details>`).join("")+
+    `<div class="muted small">※ 各库主题词表不同（MeSH↔Emtree），主题词请人工核对；此处为字段语法与自由词的自动改写。</div>`;
+  document.querySelectorAll("#multidb button[data-copy]").forEach(btn=>{
+    btn.onclick=()=>copyText(dbs[+btn.dataset.copy][1], dbs[+btn.dataset.copy][0]);
+  });
+}
+
+/* ---------- 第2步 ---------- */
+async function runReview(){
+  const seq=++REVIEW_SEQ; ++VERIFY_SEQ;
+  CURRENT_RUN=null; LAST_RESULT=null; LAST_VERIFY=null; LAST_SNAPSHOT=null; BOUND_REFS="";
+  for(const id of ["p2body","p3body"]) $(id).classList.add("hidden");
+  spin(2);
+  try{
+    const d=await executeJob("/api/jobs/review",{task_yaml:$("yaml").value,query:QUERY,pico:$("pico").value},'正在检索与筛选文献',()=>seq===REVIEW_SEQ);
+    if(!d)return false;
+    if(seq!==REVIEW_SEQ) return false;
+    if(!d.ok){ if(d.result) renderReviewResponse(d); setStep(2,"fail",d.error||"运行失败"); await saveHistory(); return false; }
+    renderReviewResponse(d);
+    await saveHistory();
+    return d.result.stats.adopted>0;
+  }catch(e){ if(seq===REVIEW_SEQ) setStep(2,"fail",e.message); return false; }
+}
+function renderReviewResponse(d){
+    const r=d.result, v=d.viz||{};
+    CURRENT_RUN=d.run_id; LAST_SNAPSHOT=d; LAST_RESULT=r; LAST_VERIFY=null;
+    STAGED_DECISIONS={};DESK_PAGE=0;
+    BOUND_REFS=(r.references||[]).map(ref=>`${ref.author||ref.authors||""} | ${ref.year||""} | ${ref.doi||""} | ${ref.title||""}`).join("\n");
+    $("refs").value=BOUND_REFS;
+    $("p3body").classList.add("hidden"); $("verdicts").innerHTML=""; $("compare").innerHTML="";
+    $("p2body").classList.remove("hidden");
+    $("p2sub").textContent = [r.search_line, r.screen_line, ...(r.notes||[])].filter(Boolean).join(" ｜ ");
+    // PRISMA 流程图
+    $("prisma").innerHTML = prismaSVG(r.stats||{});
+    // tiles
+    const st=r.stats||{};
+    $("tiles2").innerHTML = [["本批获取",st.retrieved??st.hit],["本批去重后",st.dedup],["初筛纳入",st.included],
+      ["进入材料稿",st.adopted],["其中待核候选",st.provisional_adopted],["存疑待核",st.uncertain],["排除",st.excluded]]
+      .map(([l,n])=>`<div class="tile"><div class="n">${n??0}</div><div class="l">${l}</div></div>`).join("");
+    // year bars
+    const ys=v.years||[]; const ymax=Math.max(1,...ys.map(y=>y.count));
+    $("yearbars").innerHTML = ys.length? ys.map(y=>
+      `<div class="bcol"><div class="bv">${y.count}</div>
+       <div class="bb" style="height:${Math.max(6,y.count/ymax*88)}%"></div>
+       <div class="bl">${y.year}</div></div>`).join("")
+      : '<div class="muted small">无年份数据</div>';
+    // sources
+    $("srcs").innerHTML = (v.sources||[]).map(s=>
+      `<span class="pill">${esc(s.name)} × ${s.count}</span>`).join("") ||
+      '<span class="muted small">—</span>';
+    // sections（可折叠：默认只露标题）
+    let html='<div class="toolbar">'+
+      '<button class="ghost mini" onclick="toggleAll(true)">展开全部</button>'+
+      '<button class="ghost mini" onclick="toggleAll(false)">收起全部</button>'+
+      '<button class="ghost mini" onclick="copyReview()">复制综述全文</button>'+
+      '<button class="ghost mini" onclick="downloadReview()">下载 Markdown</button>'+
+      '<button class="ghost mini" onclick="downloadRIS()">导出 RIS/EndNote</button>'+
+      '<button class="ghost mini" onclick="downloadWord()">导出 Word</button>'+
+      '<button class="ghost mini" onclick="exportPDF()">导出 PDF/打印</button></div>';
+    for(const sec of (r.sections||[])){
+      html+=`<details class="sec"><summary>${esc(sec.index)}、${esc(sec.title)}</summary>`;
+      for(const b of (sec.blocks||[])){
+        if(b.heading){
+          html+=`<details class="blk"><summary>${esc(b.heading)}</summary>`;
+          for(const p of (b.paragraphs||[])) html+=`<p class="para">${citeHtml(p,r.references||[])}</p>`;
+          html+=`</details>`;
+        } else {
+          for(const p of (b.paragraphs||[])) html+=`<p class="para">${citeHtml(p,r.references||[])}</p>`;
+        }
+      }
+      if((sec.items||[]).length)
+        html+=`<ul class="small">`+sec.items.map(it=>`<li>${esc(it)}</li>`).join("")+`</ul>`;
+      html+=`</details>`;
+    }
+    $("reviewSections").innerHTML=html;
+    if(r.synthesis)$("reviewSections").innerHTML=html.slice(0,html.indexOf('</div>')+6)+synthesisHtml(r.synthesis);
+    LAST_RESULT=r;
+    renderRefs();
+    renderEva(r);
+    LAST_INTERNAL=d.internal||null;
+    renderInternal(d.internal);
+    LAST_ART=d.artifacts||null;
+    renderPlan(d.plan);
+    renderArtifacts(d.artifacts);
+    renderTrust(r, d.internal, d.artifacts);
+    LAST_EVIDENCE = d.evidence || null;
+    renderEvidence(d.evidence);
+    renderOverview();renderDesk();renderSynthesis();
+    // refs
+    renderRefs();    // excluded
+    if((r.excluded||[]).length){
+      $("excludedWrap").classList.remove("hidden");
+      $("excTable").innerHTML = "<tr><th>题名</th><th>年份</th><th>原因</th></tr>" +
+        r.excluded.map(e=>`<tr><td>${esc(e.title)} ${fulltextLinks(e)}</td><td>${esc(e.year)}</td>
+          <td class="muted small">${esc(e.reason)}<br><span class="muted small">${esc(e.record_id||"")}</span></td></tr>`).join("");
+    } else $("excludedWrap").classList.add("hidden");
+    const stepMessage=r.status==="failed"?"全部来源请求失败":st.adopted?`已整理 ${st.adopted} 篇材料（待核候选 ${st.provisional_adopted||0}）· 可继续题录核验`:st.uncertain?`${st.uncertain} 条存疑待人工判断；尚无可进入初稿的材料`:"本批没有可进入初稿的材料";
+    setStep(2,st.adopted?"done":"fail",(r.status==="partial"?"部分来源请求失败 · ":"")+stepMessage);
+
+    if(d.verification) renderVerification(d.verification);
+
+}
+
+/* ---------- 第3步 ---------- */
+function parseRefs(){
+  const txt=$("refs").value||"";
+  const refs=[];
+  // ① BibTeX
+  if(txt.includes("@")){
+    const entries=txt.split(/(?=@\s*\w+\s*[{(])/);
+    const get=(e,k)=>{ const m=e.match(new RegExp(k+"\\s*=\\s*[{\"]([^}\"]*)[}\"]","i")); return m?m[1].trim():""; };
+    for(const e of entries){
+      if(!/@\s*\w+\s*[{(]/.test(e)) continue;
+      const title=get(e,"title");
+      const author=(get(e,"author")||"").split(" and ")[0];
+      const ym=(get(e,"year")||"").match(/\d{4}/);
+      let doi=get(e,"doi");
+      if(!doi){ const m=e.match(/10\.\d{4,9}\/[^\s,}]+/); if(m) doi=m[0]; }
+      if(title||doi) refs.push({author:author, year:ym?parseInt(ym[0]):null, doi:doi, title:title});
+    }
+    if(refs.length) return refs;
+  }
+  // ② 按行
+  for(const line of txt.split("\n")){
+    const l=line.trim(); if(!l) continue;
+    if(l.includes("|")){
+      const p=l.split("|").map(s=>s.trim());
+      refs.push({author:p[0]||"", year:parseInt(p[1])||null, doi:p[2]||"", title:p[3]||""});
+    } else {
+      const m=l.match(/10\.\d{4,9}\/[^\s]+/);
+      if(m) refs.push({author:"", year:null, doi:m[0], title:l.replace(m[0],"").trim()});
+      else refs.push({author:"", year:null, doi:"", title:l});
+    }
+  }
+  return refs;
+}
+function loadBibDemo(){
+  $("refs").value=
+"@article{rockel2025,\n"+
+"  title = {Deep learning-based clustering for endotyping and post-arthroplasty response classification using knee osteoarthritis multiomic data},\n"+
+"  author = {Rockel, Jason S and Kapoor, Mohit},\n"+
+"  year = {2025},\n"+
+"  doi = {10.1016/j.ard.2025.01.012}\n"+
+"}\n\n"+
+"@article{rajpurkar2022,\n"+
+"  title = {AI in health and medicine},\n"+
+"  author = {Rajpurkar, Pranav},\n"+
+"  year = {2022},\n"+
+"  doi = {10.1038/s41591-021-01614-0}\n"+
+"}\n\n"+
+"@article{fake2024,\n"+
+"  title = {Hospital-invariant feature alignment for multi-center chest radiograph triage},\n"+
+"  author = {Zhang, L},\n"+
+"  year = {2024},\n"+
+"  doi = {10.1016/j.media.2024.199999}\n"+
+"}";
+}
+async function runVerify(){
+  const seq=++VERIFY_SEQ, runId=CURRENT_RUN;
+  const bound=!!runId && $("refs").value===BOUND_REFS;
+  spin(3);
+  try{
+    const payload={online:$("online").checked};
+    if(bound) payload.run_id=runId; else payload.refs=parseRefs();
+    const d=await post("/api/verify",payload);
+    if(seq!==VERIFY_SEQ || runId!==CURRENT_RUN) return false;
+    if(!d.ok){ setStep(3,"fail",d.error); return false; }
+    renderVerification(d);
+    if(bound && LAST_SNAPSHOT){
+      LAST_SNAPSHOT.verification=d; LAST_RESULT.verification=d;
+      renderTrust(LAST_RESULT,LAST_INTERNAL,LAST_ART);
+      saveHistory();
+    }
+    return true;
+  }catch(e){ if(seq===VERIFY_SEQ) setStep(3,"fail",e.message); return false; }
+}
+function renderVerification(d){
+  LAST_VERIFY=d;
+  $("p3body").classList.remove("hidden");
+  const total=(d.refs||[]).length;
+  const cls={"通过":"vok","指向他文":"vwarn","年份待核":"vwarn","未检出":"vmut","暂无法核验":"vmut","已撤稿":"vbad"};
+  $("vstack").innerHTML=(d.summary||[]).map(x=>`<div class="${cls[x.name]||"vmut"}" style="width:${total?x.count/total*100:0}%">${esc(x.name)} ${x.count}</div>`).join("");
+  $("verdicts").innerHTML=(d.refs||[]).map(ref=>`<div class="verdict-card ${ref.verdict==="通过"?"ok":ref.verdict==="指向他文"||ref.verdict==="已撤稿"?"bad":""}">
+    <div class="flex"><div><b class="small">${esc(ref.author||ref.authors||"")} ${esc(ref.year||"")}</b> ${badge(ref.verdict)}</div><span class="muted small">${esc(ref.matched_by||"")}</span></div>
+    <div class="small">${esc(ref.title||"")}</div><div class="muted small">DOI: ${esc(ref.doi||"—")} · ${esc(ref.reason||"")} ${fulltextLinks(ref)}</div></div>`).join("");
+  $("offlineNote").classList.toggle("hidden",!d.offline);
+  $("offlineNote").textContent="未联网，未查询外部来源；不使用离线示例缓存替代真实核验。";
+  setStep(3,"done",`检查完成 · ${total} 条 · 主张待人工核查`);
+  renderRefs(); renderCompare(d);
+  renderOverview();
+}
+
+/* ---------- 第4步 ---------- */
+async function runSq3r(){
+  spin(4);
+  try{
+    const d=await post("/api/sq3r",{run_id:CURRENT_RUN});
+    if(!d.ok){ setStep(4,"fail",d.error); return false; }
+    $("p4body").classList.remove("hidden");
+    $("p4sub").textContent=`技能：${d.name} · 质量闸门 ${d.quality_gates} 项 · 模式：${(d.modes||[]).join(" / ")}`;
+    $("sqsteps").innerHTML=(d.steps||[]).map(s=>`<span class="pill">${esc(s)}</span>`).join("");
+    $("sqdesc").textContent=d.description||"";
+    $("sqReading").innerHTML=(d.reading_items||[]).map(item=>`<details><summary>[${esc(item.n)}] ${esc(item.title)}</summary><p class="small muted">${esc(item.status)}</p><div class="headline">带着问题读全文</div><ul class="small">${item.questions.map(q=>'<li>'+esc(q)+'</li>').join('')}</ul>${item.abstract_quotes.map(q=>'<div class="anchor-quote">'+esc(q)+'</div>').join('')}<a href="${esc(item.record_url||'https://pubmed.ncbi.nlm.nih.gov/')}" target="_blank" rel="noopener noreferrer">打开文献记录</a></details>`).join('');
+    setStep(4,"done","摘要阅读提纲已整理 · 全文待核");
+    return true;
+  }catch(e){ setStep(4,"fail",e.message); return false; }
+}
+
+/* ---------- 导出与折叠 ---------- */
+function normT(s){ return (s||"").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g,""); }
+function fulltextLinks(ref){
+  const safe=u=>/^https?:\/\//i.test(u||"")?u:"";
+  const url=safe(ref.record_url)||safe(ref.url)||(/^10\./.test(ref.doi||ref.identifier||"")?"https://doi.org/"+encodeURIComponent(ref.doi||ref.identifier):"");
+  const search="https://pubmed.ncbi.nlm.nih.gov/?term="+encodeURIComponent(ref.title||"");
+  return (url?`<a target="_blank" rel="noopener" href="${esc(url)}">来源记录</a> · `:"")+`<a target="_blank" rel="noopener" href="${esc(search)}">题名检索</a>`;
+}
+function citeHtml(text, refs){
+  return esc(text).replace(/\[(\d+)\]/g,(match,n)=>{
+    const ref=refs.find(r=>r.n===+n);
+    if(!ref) return match;
+    const url=/^https?:\/\//i.test(ref.record_url||"")?ref.record_url:ref.search_url;
+    return /^https?:\/\//i.test(url||"")?`<a target="_blank" rel="noopener" href="${esc(url)}" title="${esc(ref.record_url?'来源记录':'题名检索，未确认来源')}">${match}</a>`:match;
+  });
+}
+function renderRefs(){
+  if(!LAST_RESULT) return;
+  const map={};
+  if(LAST_VERIFY && LAST_VERIFY.run_id===CURRENT_RUN) for(const v of (LAST_VERIFY.refs||[])) map[v.record_id||normT(v.title)]=v.verdict;
+  $("refList").innerHTML=(LAST_RESULT.references||[]).map(ref=>{
+    const v=map[ref.record_id||normT(ref.title)];
+    const tags=(ref.tags||[]).map(t=>`<span class="pill" style="font-size:11px;padding:2px 8px">${esc(t)}</span>`).join("");
+    return `<li>${esc(ref.authors)}. ${esc(ref.title)}. <i>${esc(ref.venue)}</i>, ${esc(ref.year)}.`+
+      `${v?(" "+badge(v)):""} ${tags} <span class="small">${esc(ref.eligibility_status||"纳入状态待复核")} · ${esc(ref.evidence_level||"全文待核")} · ${fulltextLinks(ref)}</span></li>`;
+  }).join("");
+}
+/* ---------- 引用对比视图 ---------- */
+function renderCompare(d){
+  const refs=d.refs||[];
+  const list=items=>items.map(r=>`<li>${esc(r.title||r.doi||"")} ${badge(r.verdict)} ${fulltextLinks(r)}</li>`).join("")||'<li class="muted">无</li>';
+  const good=refs.filter(r=>r.verdict==="通过");
+  const pending=refs.filter(r=>r.verdict!=="通过");
+  $("compare").innerHTML=`<div class="headline">题录核验结果 · ${d.run_id?'当前运行':'独立输入，不代表当前综述'}</div><div class="grid2">
+    <div><div class="muted small">题录匹配（${good.length}）</div><ul class="small">${list(good)}</ul></div>
+    <div><div class="muted small">存疑 / 待核（${pending.length}）</div><ul class="small">${list(pending)}</ul></div></div>
+    <div class="muted small">未自动删除正文引用。请核查疑点后，通过任务卡筛选判定生成新稿；旧稿保留。</div>`;
+}
+
+function buildMarkdown(){
+  const r=LAST_RESULT;
+  let md="# 循证科研智能体工作台 · 证据综述\n\n";
+  md+="> 临床问题："+($("pico").value||"—")+"\n\n";
+  md+="> **AI 辅助声明**：本稿由循证科研智能体工作台辅助生成，检索式、筛选与引用核验均已留痕（见运行产物目录）；所有结论须由作者复核，AI 不替代作者的判断与署名。\n\n";
+  if(window.__trust){
+    md+="**可信度报告**："+window.__trust.score+"/100 · "+window.__trust.grade+"\n\n";
+    for(const m of window.__trust.metrics) md+="- "+(m.ok?"[通过] ":"[未达] ")+m.name+"\n";
+    md+="\n";
+  }
+  if(LAST_EVIDENCE){
+    md+="**文献与研究问题的关系**："+evidenceSummary(LAST_EVIDENCE)+"\n\n";
+    md+=(LAST_EVIDENCE.conclusion||"历史材料尚未执行本版关系分析")+"\n\n";
+  }
+  if(QUERY) md+="## 检索式（可直接粘贴 PubMed）\n\n```\n"+QUERY+"\n```\n\n";
+  if(r){
+    if(r.replay)md+="> **真实案例回放**：原始检索时间 "+r.replay.recorded_at+"；本次未重新查询数据库或模型。\n\n";
+    if(r.synthesis)md+="**正文整理方式**："+(r.synthesis.provider==='claude-cli'?'Claude Code中文初稿':'摘要原句整理')+"；"+r.synthesis.validation.note+"\n\n";
+    md+="## 检索与筛选\n\n- "+r.search_line+"\n- "+r.screen_line+"\n\n";
+    for(const sec of (r.sections||[])){
+      md+="### "+sec.index+"、"+sec.title+"\n\n";
+      for(const b of (sec.blocks||[])){
+        if(b.heading) md+="**"+b.heading+"**\n\n";
+        for(const p of (b.paragraphs||[])) md+=p+"\n\n";
+      }
+      for(const it of (sec.items||[])) md+="- "+it+"\n";
+      md+="\n";
+    }
+    md+="### 参考文献\n\n";
+    for(const ref of (r.references||[]))
+      md+=ref.n+". "+ref.authors+". "+ref.title+". "+ref.venue+", "+ref.year+
+         ((ref.tags&&ref.tags.length)?" ["+ref.tags.join("/")+"]":"")+". "+(ref.record_url||ref.search_url||"")+" · "+(ref.evidence_level||"全文待核")+"\n";
+    md+="\n";
+    if(r.synthesis){md+="### 逐段摘要依据\n\n";for(const sec of r.synthesis.sections){md+="#### "+sec.heading+"\n\n";for(const p of sec.paragraphs){md+=p.text+"\n\n";for(const a of p.evidence)md+="> 文献 ["+a.n+"] · 摘要原文："+a.quote+"\n\n";}}}
+  }
+  if(LAST_VERIFY && LAST_VERIFY.run_id===CURRENT_RUN){
+    md+="## 引用真实性核验\n\n";
+    for(const ref of (LAST_VERIFY.refs||[]))
+      md+="- ["+ref.verdict+"] "+ref.author+" "+ref.year+" · "+ref.title+" · DOI "+ref.doi+"（"+ref.matched_by+"）\n";
+    md+="\n";
+  }
+  if(LAST_INTERNAL && LAST_INTERNAL.ok){
+    const r=LAST_INTERNAL.report||{};
+    md+="## 综述内引用一致性核验\n\n总体："+(r.ok?"通过":"未通过")+"\n\n";
+    for(const c of (r.checks||[])) md+="- "+(c.ok?"[通过] ":"[失败] ")+c.name+"："+c.detail+"\n";
+    md+="\n";
+  }
+  md+="> 数据来源：NLM MeSH / OpenAlex / Semantic Scholar / Crossref / PubMed。仅供科研参考，不替代专业复核。\n";
+  return md;
+}
+function copyReview(){
+  if(!LAST_RESULT){ $("globalStatus").textContent="请先运行第 2 步"; return; }
+  navigator.clipboard?.writeText(buildMarkdown())
+    .then(()=>$("globalStatus").textContent="综述全文已复制到剪贴板")
+    .catch(()=>$("globalStatus").textContent="复制失败，请用“下载 Markdown”");
+}
+function downloadReview(){
+  if(!LAST_RESULT){ $("globalStatus").textContent="请先运行第 2 步"; return; }
+  const blob=new Blob([buildMarkdown()],{type:"text/markdown;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="循证综述_"+new Date().toISOString().slice(0,10)+".md";
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function toggleAll(open){ document.querySelectorAll("#reviewSections details").forEach(d=>d.open=open); }
+
+/* ---------- PICO 向导 ---------- */
+function buildPICO(){
+  const P=$("pP").value.trim(), I=$("pI").value.trim(),
+        C=$("pC").value.trim(), O=$("pO").value.trim();
+  if(!P && !I && !O){ $("globalStatus").textContent="请至少填写 P / I / O 之一"; return; }
+  const parts=[];
+  if(P) parts.push(P+".");
+  if(I) parts.push("Intervention: "+I+".");
+  if(C) parts.push("Comparator: "+C+".");
+  if(O) parts.push("Outcome: "+O+".");
+  $("pico").value=parts.join(" ");
+  genDraft();
+}
+
+/* ---------- 导出 RIS / Word ---------- */
+function doiMap(){
+  const m={};
+  for(const v of ((LAST_VERIFY&&LAST_VERIFY.run_id===CURRENT_RUN&&LAST_VERIFY.refs)||[])) if(v.doi) m[normT(v.title)]=v.doi;
+  return m;
+}
+function toRIS(){
+  if(!LAST_RESULT) return "";
+  const dm=doiMap(); let out="";
+  for(const ref of (LAST_RESULT.references||[])){
+    out+="TY  - JOUR\n";
+    out+="TI  - "+ref.title+"\n";
+    for(const a of (ref.authors||"").split(/[、,]/)) if(a.trim()) out+="AU  - "+a.trim()+"\n";
+    if(ref.year) out+="PY  - "+ref.year+"\n";
+    if(ref.venue) out+="JO  - "+ref.venue+"\n";
+    if(ref.record_url) out+="UR  - "+ref.record_url+"\n";
+    const doi=(ref.doi||dm[normT(ref.title)]); if(doi) out+="DO  - "+doi+"\n";
+    out+="N1  - 检索源: "+(ref.source||"-")+"\n";
+    out+="ER  - \n\n";
+  }
+  return out;
+}
+function downloadRIS(){
+  if(!LAST_RESULT){ $("globalStatus").textContent="请先运行第 2 步"; return; }
+  const blob=new Blob([toRIS()],{type:"application/x-research-info-systems"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="循证综述_"+new Date().toISOString().slice(0,10)+".ris";
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function buildHtmlReport(){
+  const r=LAST_RESULT;
+  let h="<h1>循证科研智能体工作台 · 证据综述</h1>";
+  h+="<p><b>临床问题：</b>"+esc($("pico").value)+"</p>";
+  h+="<p><b>AI 辅助声明：</b>本稿由循证科研智能体工作台辅助生成，检索式、筛选与引用核验均已留痕；所有结论须由作者复核，AI 不替代作者的判断与署名。</p>";
+  if(window.__trust){
+    h+="<p><b>可信度报告：</b>"+window.__trust.score+"/100 · "+esc(window.__trust.grade)+"</p><ul>";
+    for(const m of window.__trust.metrics) h+="<li>"+(m.ok?"[通过] ":"[未达] ")+esc(m.name)+"</li>";
+    h+="</ul>";
+  }
+  if(LAST_EVIDENCE){
+    h+="<p><b>文献与研究问题的关系：</b>"+esc(evidenceSummary(LAST_EVIDENCE))+"。"+esc(LAST_EVIDENCE.conclusion||"历史材料尚未执行本版关系分析")+"</p>";
+  }
+  if(QUERY) h+="<h2>检索式</h2><pre style='white-space:pre-wrap'>"+esc(QUERY)+"</pre>";
+  if(r){
+    if(r.replay)h+="<p><b>真实案例回放：</b>原始检索时间 "+esc(r.replay.recorded_at)+"；本次未重新查询数据库或模型。</p>";
+    if(r.synthesis)h+="<p><b>正文整理方式：</b>"+esc(r.synthesis.provider==='claude-cli'?'Claude Code中文初稿':'摘要原句整理')+"；"+esc(r.synthesis.validation.note)+"</p>";
+    h+="<h2>检索与筛选</h2><p>"+esc(r.search_line)+"<br>"+esc(r.screen_line)+"</p>";
+    h+="<h2>PRISMA 筛选流程图</h2>"+prismaSVG(r.stats||{});
+    for(const sec of (r.sections||[])){
+      h+="<h2>"+esc(sec.index)+"、"+esc(sec.title)+"</h2>";
+      for(const b of (sec.blocks||[])){
+        if(b.heading) h+="<h3>"+esc(b.heading)+"</h3>";
+        for(const p of (b.paragraphs||[])) h+="<p>"+esc(p)+"</p>";
+      }
+      if((sec.items||[]).length)
+        h+="<ul>"+sec.items.map(it=>"<li>"+esc(it)+"</li>").join("")+"</ul>";
+    }
+    h+="<h2>参考文献</h2><ol>"+(r.references||[]).map(ref=>
+      "<li>"+esc(ref.authors)+". "+esc(ref.title)+". <i>"+esc(ref.venue)+"</i>, "+esc(ref.year)+". "+
+      ((ref.tags&&ref.tags.length)?"<small>["+esc(ref.tags.join("/"))+"]</small>":"")+" "+fulltextLinks(ref)+"</li>").join("")+"</ol>";
+    if(r.synthesis){h+="<h2>逐段摘要依据</h2>";for(const sec of r.synthesis.sections){h+="<h3>"+esc(sec.heading)+"</h3>";for(const p of sec.paragraphs){h+="<p>"+esc(p.text)+"</p>";for(const a of p.evidence)h+="<blockquote>文献 ["+esc(a.n)+"] · 摘要原文："+esc(a.quote)+"</blockquote>";}}}
+  }
+  if(LAST_VERIFY && LAST_VERIFY.run_id===CURRENT_RUN){
+    h+="<h2>引用真实性核验</h2><table border='1' cellpadding='6' style='border-collapse:collapse'>"+
+       "<tr><th>判定</th><th>文献</th><th>DOI</th><th>依据</th></tr>";
+    for(const ref of (LAST_VERIFY.refs||[]))
+      h+="<tr><td>"+esc(ref.verdict)+"</td><td>"+esc(ref.author+" "+ref.year+" "+ref.title)+
+         "</td><td>"+esc(ref.doi)+"</td><td>"+esc(ref.matched_by)+"</td></tr>";
+    h+="</table>";
+  }
+  if(LAST_INTERNAL && LAST_INTERNAL.ok){
+    const r=LAST_INTERNAL.report||{};
+    h+="<h2>综述内引用一致性核验</h2><p><b>总体："+(r.ok?"通过":"未通过")+"</b></p><ul>";
+    for(const c of (r.checks||[])) h+="<li>"+(c.ok?"[通过] ":"[失败] ")+esc(c.name)+"："+esc(c.detail)+"</li>";
+    h+="</ul>";
+  }
+  h+="<p style='color:#666;font-size:12px'>数据来源：NLM MeSH / OpenAlex / Semantic Scholar / Crossref / PubMed。仅供科研参考，不替代专业复核。</p>";
+  return "<html><head><meta charset='utf-8'></head><body style='font-family:SimSun,serif;line-height:1.7'>"+h+"</body></html>";
+}
+function downloadWord(){
+  if(!LAST_RESULT){ $("globalStatus").textContent="请先运行第 2 步"; return; }
+  const blob=new Blob(["\ufeff"+buildHtmlReport()],{type:"application/msword"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="循证综述_"+new Date().toISOString().slice(0,10)+".doc";
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function exportPDF(){
+  if(!LAST_RESULT){ $("globalStatus").textContent="请先运行第 2 步"; return; }
+  const w=window.open("","_blank");
+  if(!w){ $("globalStatus").textContent="浏览器拦截了新窗口，请允许弹窗后重试"; return; }
+  w.document.write(buildHtmlReport());
+  w.document.close();
+  w.focus();
+  setTimeout(()=>{ try{ w.print(); }catch(e){} },500);
+}
+
+/* ---------- 检索计划 / 运行产物 ---------- */
+function renderPlan(p){
+  const el=$("planBox"); if(!el) return;
+  if(!p){ el.innerHTML=""; return; }
+  if(!p.ok){ el.innerHTML=`<div class="headline">检索计划（中/英检索式）</div>
+    <p class="muted small">不可用：${esc(p.error||"")}</p>`; return; }
+  const pl=p.plan||{};
+  const actual=(LAST_RESULT?.search||[]).map(s=>`<div class="muted small">${esc(s.source)} · ${esc(s.status)} · 时间窗 ${esc(s.years||"未知")}</div><pre>${esc(s.query||"")}</pre>`+
+    (s.request_url&&/^https?:\/\//i.test(s.request_url)?`<div class="small"><a target="_blank" rel="noopener" href="${esc(s.request_url)}">查看实际请求地址</a></div>`:"<div class=\"muted small\">本条旧记录未保存请求地址 / 响应总数，以已有原始题录为准。</div>")).join("");
+  el.innerHTML=`<div class="headline">实际发送的检索式（逐库）</div>`+actual+
+    `<div class="headline">中 / 英检索计划草稿（与实际请求分开记录）</div>`+
+    `<div class="muted small">中文检索式</div><pre>${esc(pl.query_zh||"")}</pre>`+
+    `<div class="muted small">英文检索式</div><pre>${esc(pl.query_en||"（空，请在主题中补充英文关键词）")}</pre>`+
+    `<div class="row"><button class="ghost mini" onclick="copyText((LAST_SNAPSHOT.plan.plan.query_en||''),'英文检索式')">复制英文检索式</button></div>`+
+    ((pl.notes||[]).length?`<ul class="small">${pl.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:"");
+}
+function dl(name,text,ctype){
+  if(!text){ $("globalStatus").textContent="无可下载内容"; return; }
+  const blob=new Blob(["\ufeff"+text],{type:(ctype||"text/csv")+";charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=name; a.click(); URL.revokeObjectURL(a.href);
+}
+function renderArtifacts(a){
+  const el=$("artifacts"); if(!el) return;
+  if(!a){ el.innerHTML=""; return; }
+  if(!a.ok){ el.innerHTML=`<div class="headline">运行产物</div><p class="muted small">落盘失败：${esc(a.error||"")}</p>`; return; }
+  $("artifacts").innerHTML=
+    `<div class="headline">运行产物（已落盘，可复查）</div>`+
+    `<div class="muted small" style="word-break:break-all">目录：${esc(a.run_dir||"")}</div>`+
+    `<div class="row">`+
+    `<button class="ghost mini" onclick="dl('included.csv',LAST_ART.included_csv)">下载 included.csv</button>`+
+    `<button class="ghost mini" onclick="dl('excluded.csv',LAST_ART.excluded_csv)">下载 excluded.csv</button>`+
+    `</div>`;
+}
+
+/* ---------- 综述可信度报告 ---------- */
+function computeTrust(result,internal,artifacts){
+  const refs=(result&&result.references)||[], rep=(internal&&internal.ok&&internal.report)||null;
+  const verification=result&&result.verification;
+  const checked=verification&&verification.run_id===result.run_id;
+  const metrics=[
+    {name:"引用编号可回查",ok:!!rep&&refs.length>0&&rep.fake_citations.length===0,w:20},
+    {name:"正文 DOI 与文献表一致",ok:!!rep&&refs.length>0&&rep.fake_dois.length===0,w:15},
+    {name:"真实来源记录完整（非 mock）",ok:refs.length>0&&refs.every(r=>r.source!=="mock"&&/^https?:\/\//i.test(r.record_url||"")),w:15},
+    {name:"本次材料稿文献外部题录核验通过",ok:!!checked&&refs.length>0&&verification.refs.length===refs.length&&verification.refs.every(r=>r.verdict==="通过"),w:20},
+    {name:"检索过程已落盘",ok:!!(artifacts&&artifacts.ok),w:15},
+    {name:"标注证据层级与人工复核",ok:refs.length>0&&refs.every(r=>r.evidence_level),w:15}
+  ];
+  const score=metrics.reduce((n,m)=>n+(m.ok?m.w:0),0);
+  return {score,grade:"检查覆盖 · 待人工复核",metrics,n:refs.length};
+}
+function renderTrust(result, internal, artifacts){
+  const el=$("trust"); if(!el) return;
+  if(!result){ el.innerHTML=""; return; }
+  const t=computeTrust(result, internal, artifacts);
+  window.__trust=t;
+  const rows=t.metrics.map(m=>
+    `<div style="margin:2px 0"><span class="badge ${m.ok?'b-ok':'b-bad'}">${m.ok?'通过':'未达'}</span>
+     <b class="small">${esc(m.name)}</b>${m.hint?` <span class="muted small">(${esc(m.hint)})</span>`:""}</div>`).join("");
+  el.innerHTML=`<div class="headline">综述核验检查报告</div>`+
+    `<div class="tiles"><div class="tile"><div class="n">${t.score}</div><div class="l">检查覆盖 / 100</div></div>`+
+    `<div class="tile"><div class="n" style="font-size:15px">${esc(t.grade)}</div><div class="l">评级</div></div></div>`+
+    rows+
+    `<div class="muted small" style="margin-top:4px">※ 分值仅表示检查项覆盖，不是内容正确概率或科学证据等级；正文主张仍须人工核查。</div>`;
+}
+
+/* ---------- 循证行动清单（健康管理） ---------- */
+
+
+/* ---------- 结论速览（证据方向） ---------- */
+/* ---------- 结论速览（证据方向） ---------- */
+function evidenceSummary(e){
+  if(e?.mode!=="question_map") return "待分析 "+(e?.items?.length||0)+" 篇";
+  return "直接相关线索 "+(e.direct||0)+" / 背景或方法参考 "+(e.background||0)+" / 材料待确认 "+(e.pending||0);
+}
+function renderEvidence(e){
+  const el=$("evidence"); if(!el) return;
+  if(!e){ el.innerHTML=""; return; }
+  if(e.mode!=="question_map"){
+    el.innerHTML=`<div class="headline">文献与研究问题的关系</div><p>历史材料待分析 ${(e.items||[]).length} 篇；未执行本版关系分类。</p>`;
+    return;
+  }
+  const cols=[["direct","直接相关线索","#0e8f78"],
+              ["background","背景 / 方法参考","#607d8b"],
+              ["pending","材料待确认","#c07a12"]];
+  const list=st=>(e.items||[]).filter(it=>it.role===st)
+    .map(it=>`<li>${/^https?:\/\//i.test(it.record_url||"")?`<a href="${esc(it.record_url)}" target="_blank" rel="noopener noreferrer">${esc((it.title||"").slice(0,74))}</a>`:esc((it.title||"").slice(0,74))} <span class="muted">(${esc(it.year||"")})</span><div class="small">${esc(it.reason||"")}</div>${it.snippet?`<details><summary>查看摘要依据</summary><p class="small">${esc(it.snippet)}</p></details>`:""}</li>`).join("")
+    || '<li class="muted">无</li>';
+  let html=`<div class="headline">文献与研究问题的关系</div>`+
+    `<p class="small">研究主题：${esc(e.topic||"")}</p>`+
+    `<div class="grid3">`+
+    cols.map(c=>`<div class="stance" style="border-top:4px solid ${c[2]}">
+        <h4 style="color:${c[2]}">${esc(c[1])}（${(e[c[0]]||0)} 篇）</h4><ul>${list(c[0])}</ul></div>`).join("")+
+    `</div>`+
+    `<p class="para" style="margin-top:8px"><b>综合提示：</b>${esc(e.conclusion||"")}</p>`+
+    `<div class="muted small">${esc(e.method_note||"题名/摘要初分，字段含义与全文待核。")}</div>`;
+  el.innerHTML=html;
+}
+
+/* ---------- 综述内引用一致性核验 ---------- */
+function renderInternal(iv){
+  const el=$("internal"); if(!el) return;
+  if(!iv){ el.innerHTML=""; return; }
+  if(!iv.ok){ el.innerHTML=`<div class="headline">综述内引用一致性核验</div>
+    <p class="muted small">不可用：${esc(iv.error||"")}</p>`; return; }
+  const r=iv.report||{};
+  const checks=(r.checks||[]).map(c=>
+    `<div style="margin:2px 0"><span class="badge ${c.ok?'b-ok':'b-bad'}">${c.ok?'通过':'失败'}</span>
+     <b class="small">${esc(c.name)}</b> <span class="muted small">${esc(c.detail)}</span></div>`).join("");
+  const extras=[];
+  if((r.fake_citations||[]).length) extras.push("虚假引用编号："+r.fake_citations.map(n=>"["+n+"]").join("、"));
+  if((r.fake_dois||[]).length) extras.push("编造 DOI："+r.fake_dois.join("、"));
+  if((r.uncited||[]).length) extras.push("未被正文引用："+r.uncited.map(n=>"["+n+"]").join("、"));
+  el.innerHTML=`<div class="headline">综述内引用一致性核验 <span class="muted small">· 复用 2/学术智能体 verify_citations</span></div>`+
+    `<div style="margin:4px 0"><span class="badge ${r.ok?'b-ok':'b-bad'}">总体：${r.ok?'通过':'未通过'}</span>
+     <span class="muted small">共 ${r.n_refs||0} 条文献</span></div>`+checks+
+    (extras.length?`<div class="muted small">${extras.map(esc).join("；")}</div>`:"");
+}
+
+/* ---------- 证据概览 / 研究空白 ---------- */
+const EVA_KEYS=["外部验证","多中心","前瞻性","随机对照","系统综述","Meta 分析",
+  "深度学习","机器学习","影像组学","多组学","分子分型"];
+function renderEva(r){
+  const refs=r.references||[];
+  if(!refs.length){ $("eva").innerHTML=""; return; }
+  const cnt={};
+  for(const ref of refs) for(const t of (ref.tags||[])) cnt[t]=(cnt[t]||0)+1;
+  const n=refs.length;
+  const chips=EVA_KEYS.filter(k=>cnt[k]).map(k=>`<span class="pill">${esc(k)} ${cnt[k]}/${n}</span>`).join("")
+    || '<span class="muted small">暂无标签</span>';
+  const gaps=[];
+  if(!cnt["外部验证"]) gaps.push("摘要标签未检出『外部验证』；不能据此断定研究未做外部验证。");
+  else gaps.push(cnt["外部验证"]+"/"+n+" 篇摘要提及外部测试相关措辞；不能按这一比例评定证据确定性。");
+  if(!cnt["多中心"]) gaps.push("摘要标签未检出多中心信息，请人工检查。");
+  if(!cnt["前瞻性"]) gaps.push("摘要标签未检出前瞻性设计；研究类型待人工确认。");
+  if((cnt["系统综述"]||0)+(cnt["Meta 分析"]||0)===0) gaps.push("摘要标签未检出系统综述/Meta 分析；不据此评定证据等级。");
+  $("eva").innerHTML=
+    `<div class="headline">证据概览与研究空白（按标签统计）</div>`+
+    `<div>${chips}</div>`+
+    (gaps.length?`<ul class="small" style="margin-top:6px">${gaps.map(g=>`<li>${esc(g)}</li>`).join("")}</ul>`
+                :`<p class="muted small">摘要标签已整理；研究空白与证据确定性尚待分析。</p>`)+
+    `<div class="muted small" style="margin-top:4px">※ 标签为题名/摘要启发式抽取，需人工核对。</div>`;
+}
+
+function prismaSVG(st){
+  const hit=st.retrieved??st.hit??0, dedup=st.dedup||0, adopted=st.adopted||0, exc=st.excluded||0;
+  const provisional=st.provisional_adopted||0;
+  const pending=Math.max(0,(st.uncertain||0)-provisional), overflow=Math.max(0,(st.included||0)-(st.strict_adopted??adopted));
+  const box=(x,y,label,val,color,dash)=>
+    `<rect x="${x}" y="${y}" width="220" height="64" rx="10" fill="#f7fbfa" stroke="${color}" stroke-width="2" ${dash?'stroke-dasharray="6 4"':''}/>`+
+    `<text x="${x+110}" y="${y+27}" text-anchor="middle" font-size="14" font-weight="700" fill="${color}">${label}</text>`+
+    `<text x="${x+110}" y="${y+50}" text-anchor="middle" font-size="16" font-weight="800" fill="#13211e">${val}</text>`;
+  const arrow=(x1,y1,x2,y2)=>
+    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0b6b5b" stroke-width="2" marker-end="url(#ah)"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 348" width="100%" style="max-width:600px">`+
+    `<defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">`+
+    `<path d="M0,0 L8,3 L0,6 Z" fill="#0b6b5b"/></marker></defs>`+
+    box(40,20,"本批获取（非总命中）",hit+" 条","#0b6b5b",false)+
+    box(40,144,"本批去重后",dedup+" 条","#0b6b5b",false)+
+    box(40,268,"材料稿（含待核候选）",adopted+" 条 / 候选 "+provisional,"#0e8f78",false)+
+    box(340,144,"存疑 / 排除 / 纳入未采用",pending+" / "+exc+" / "+overflow,"#c0392b",true)+
+    arrow(150,84,150,144)+
+    arrow(150,208,150,268)+
+    arrow(260,176,340,176)+
+    `<text x="150" y="118" text-anchor="middle" font-size="11" fill="#5f6f6c">去重</text>`+
+    `<text x="150" y="243" text-anchor="middle" font-size="11" fill="#5f6f6c">按纳入/排除标准筛选</text>`+
+    `<text x="300" y="169" text-anchor="middle" font-size="11" fill="#c0392b">其余</text>`+
+    `</svg>`;
+}
+function exportPrisma(){
+  const svg=document.querySelector("#prisma svg");
+  if(!svg){ $("globalStatus").textContent="请先运行第 2 步"; return; }
+  const s=new XMLSerializer().serializeToString(svg);
+  const url="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(s);
+  const img=new Image();
+  img.onload=()=>{
+    const vb=svg.viewBox.baseVal, scale=2;
+    const c=document.createElement("canvas");
+    c.width=vb.width*scale; c.height=vb.height*scale;
+    const ctx=c.getContext("2d");
+    ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
+    ctx.setTransform(scale,0,0,scale,0,0);
+    ctx.drawImage(img,0,0,vb.width,vb.height);
+    c.toBlob(b=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(b);
+      a.download="PRISMA流程图_"+new Date().toISOString().slice(0,10)+".png";
+      a.click(); URL.revokeObjectURL(a.href); });
+  };
+  img.onerror=()=>{ $("globalStatus").textContent="导出失败，请改用截图"; };
+  img.src=url;
+}
+
+/* ---------- 组件自检 ---------- */
+async function loadHealth(){
+  try{ const d=await (await fetch(API+"/api/health")).json();
+    const el=$("health");
+    for(const it of d.items){
+      const s=document.createElement("span"); s.className="pill";
+      s.style.background=it.ok?"#e5f4ef":"#fdecea";
+      s.style.color=it.ok?"#0b6b5b":"#c0392b";
+      s.textContent=(it.ok?"✓ ":"✗ ")+it.name; s.title=it.hint||"";
+      el.appendChild(s);
+    }
+    if(!d.ok) $("warn").classList.remove("hidden");
+  }catch(e){}
+}
+
+/* ---------- 悬停提示 ---------- */
+const TIPS = {
+  runAll:"一键执行四步：①MeSH 检索式 ②检索·筛选·综述 ③引用核验 ④SQ3R 精读",
+  draft:"先把你的一句话问题写成结构化任务卡草稿，确认范围后再运行（避免范围跑偏）",
+  example:"填入示例问题 / 任务卡 / 参考文献",
+  clear:"清空输入与结果",
+  pico:"输入一个临床问题或 PICO；也可用下方「PICO 向导」自动生成",
+  online:"第 3 步勾选联网时查询 Crossref/PubMed；未联网则保留待核，不以缓存代替。查 PubMed 总匹配数也需要联网。"
+};
+function applyTips(){
+  for(const k in TIPS){ const e=$(k); if(e) e.title=TIPS[k]; }
+  const lbl=document.querySelector("label.chk"); if(lbl) lbl.title=TIPS.online;
+}
+/* ---------- 小白模式 ---------- */
+function applyBegMode(on){
+  document.body.classList.toggle("no-beg", !on);
+  const cb=$("beginner"); if(cb) cb.checked=on;
+  try{ localStorage.setItem("ew_beg", on?"1":"0"); }catch(e){}
+}
+/* ---------- 步骤面板收起/展开 ---------- */
+function collapseAll(v){ document.querySelectorAll(".step-panel").forEach(p=>p.classList.toggle("collapsed",v)); }
+function initPanelCollapse(){
+  document.querySelectorAll(".step-panel").forEach(p=>{
+    const head=p.querySelector(":scope > .flex");
+    if(!head) return;
+    head.title="点击此处收起 / 展开本步";
+    head.addEventListener("click",e=>{
+      if(e.target.closest("button,a,label,input")) return;
+      p.classList.toggle("collapsed");
+    });
+  });
+}
+
+/* ---------- 术语百科 ---------- */
+const GLOSSARY={
+  mesh:"MeSH：PubMed 官方的『医学主题词表』，相当于给医学术语定的标准名，用它检索更准。",
+  pubmed:"PubMed：美国国立医学图书馆的生物医学文献数据库，医学生最常用的文献库。",
+  doi:"DOI：文献的『身份证号』，形如 10.xxxx/...；核验就是拿它去官方库查文献是否真实存在。",
+  crossref:"Crossref：全球学术出版物的官方注册库，用 DOI 就能查到文献的登记记录。",
+  prisma:"PRISMA：系统评价的『报告规范』，其流程图记录文献从检索到纳入的全过程。",
+  pico:"PICO：把临床问题拆成四块——P 人群、I 干预、C 对照、O 结局。",
+  endotype:"endotype（内型）：按分子机制划分的疾病亚型，用于精准治疗。",
+  sq3r:"SQ3R：一套精读法，五步——浏览 Survey、提问 Question、精读 Read、复述 Recite、回顾 Review。",
+  daishen:"待核：没有在官方词表里精确命中的词，只当自由词用，需要人工再确认。",
+  external:"外部验证：在『没参与训练的新数据/新医院』上再测一次，检验能不能推广。",
+  retract:"撤稿：论文因错误或造假被期刊撤回，引用它很危险。",
+  halluc:"幻觉引用：AI 编出来的、现实中并不存在的参考文献（DOI 打不开）。"
+};
+document.addEventListener("click",(e)=>{
+  const el=e.target.closest(".term");
+  const pop=$("pop");
+  if(!pop) return;
+  if(el){
+    pop.innerHTML=GLOSSARY[el.dataset.t]||el.dataset.t;
+    pop.classList.remove("hidden");
+    const r=el.getBoundingClientRect();
+    pop.style.left=Math.max(8, Math.min(window.scrollX+r.left, window.scrollX+window.innerWidth-330))+"px";
+    pop.style.top=(window.scrollY+r.bottom+6)+"px";
+    e.stopPropagation();
+    return;
+  }
+  pop.classList.add("hidden");
+},true);
+
+/* ---------- 新手引导 ---------- */
+const TOUR=[
+  {t:"欢迎使用循证科研智能体工作台", b:"它是一台『学术研究小助手』：输入一个问题，它帮你查文献、写出带引用的草稿，并逐条检查引用是不是真的。"},
+  {t:"第 1 步：把问题写进控制台", b:"用一句大白话描述你要查什么，例如『人工智能能不能帮医生给膝关节炎分型』。不确定就点「载入示例」。"},
+  {t:"点「运行全流程」", b:"系统自动完成四步：生成检索式 → 检索筛选写综述 → 核验引用 → 精读引擎。结果依次出现在下面四张卡里。"},
+  {t:"最关键：引用核验", b:"AI 写的综述常常引用是编的。第 3 步会把每条引用拿去官方数据库查，题录匹配、字段冲突与暂无法查询分别呈现，并保留复核入口。"}
+];
+let tourI=0;
+function tourShow(){ tourI=0; renderTour(); const t=$("tour"); t.classList.remove("hidden"); t.style.display=""; }
+function renderTour(){
+  const s=TOUR[tourI];
+  $("tourStep").textContent="第 "+(tourI+1)+" / "+TOUR.length+" 步";
+  $("tourTitle").textContent=s.t; $("tourBody").textContent=s.b;
+  $("tourNextBtn").textContent=(tourI===TOUR.length-1)?"开始使用":"下一步";
+}
+function tourNext(){ if(tourI<TOUR.length-1){ tourI++; renderTour(); } else tourClose(); }
+function tourPrev(){ if(tourI>0){ tourI--; renderTour(); } }
+function tourClose(){ const t=$("tour"); t.classList.add("hidden"); t.style.display="none"; try{ localStorage.setItem("ew_tour","1"); }catch(e){} }
+
+/* ---------- 多综述管理 ---------- */
+async function saveHistory(){
+  try{
+    const d=await (await fetch(API+"/api/runs")).json();
+    if(!d.ok) throw new Error(d.error||"读取失败");
+    localStorage.setItem("ew_hist",JSON.stringify(d.runs.map(r=>({...r,pico:r.topic,ts:r.created_at,adopted:r.stats.adopted}))));
+  }catch(e){ $("globalStatus").textContent="历史列表同步失败："+e.message; }
+  renderHistory();
+}
+function renderHistory(){
+  let h=[]; try{ h=JSON.parse(localStorage.getItem("ew_hist")||"[]"); }catch(e){}
+  const el=$("history"); if(!el) return;
+  if(!h.length){ el.innerHTML='<span class="muted small">暂无保存的综述</span>'; return; }
+  let t='<table><tr><th>时间</th><th>主题</th><th>材料稿文献</th><th>检查覆盖</th><th>操作</th></tr>';
+  h.forEach((r,i)=>{
+    t+=`<tr><td class="small">${esc(r.ts||"")}</td>
+        <td class="small">${esc((r.pico||"").slice(0,42))}</td>
+        <td class="small">${r.adopted||0} 篇</td>
+        <td class="small">${r.trust?esc(r.trust+"/100"):"—"}</td>
+        <td><button class="ghost mini" data-load="${i}">载入</button>
+            <button class="ghost mini" data-del="${i}">删</button></td></tr>`;
+  });
+  t+='</table><div class="row"><button class="ghost mini" onclick="clearHistory()">清空全部</button></div>';
+  el.innerHTML=t;
+  el.querySelectorAll("button[data-load]").forEach(b=>b.onclick=()=>loadReviewRecord(h[+b.dataset.load]));
+  el.querySelectorAll("button[data-del]").forEach(b=>b.onclick=()=>delHistory(+b.dataset.del));
+}
+async function loadReviewRecord(r){
+  resetResearch();
+  if(!r.run_id){ $("pico").value=r.pico||""; $("yaml").value=r.yaml||""; QUERY=r.query||""; $("globalStatus").textContent="旧版历史只有参数，请核对任务卡后重跑。"; return; }
+  const seq=++REVIEW_SEQ;
+  try{
+    const d=await (await fetch(API+"/api/run?id="+encodeURIComponent(r.run_id))).json();
+    if(seq!==REVIEW_SEQ) return;
+    if(!d.result) throw new Error(d.error||"没有完整运行记录");
+    $("pico").value=d.pico||""; TASK_PICO=d.pico||""; $("yaml").value=d.task_yaml||""; QUERY=d.query||""; $("q").textContent=QUERY||"(未生成)";
+    renderReviewResponse(d);
+    if(!d.ok) setStep(2,"fail",d.error||"该任务执行失败");
+    $("globalStatus").textContent="已恢复完整记录："+d.run_id;
+  }catch(e){ $("globalStatus").textContent="恢复失败："+e.message; }
+}
+async function delHistory(i){
+  const items=JSON.parse(localStorage.getItem("ew_hist")||"[]"), record=items[i];
+  try{
+    if(record&&record.run_id){ const d=await post("/api/runs/archive",{run_id:record.run_id}); if(!d.ok) throw new Error(d.error); if(record.run_id===CURRENT_RUN) resetResearch(); }
+    items.splice(i,1); localStorage.setItem("ew_hist",JSON.stringify(items)); renderHistory();
+  }catch(e){ $("globalStatus").textContent="归档失败："+e.message; }
+}
+async function clearHistory(){
+  const items=JSON.parse(localStorage.getItem("ew_hist")||"[]");
+  for(let i=items.length-1;i>=0;i--) await delHistory(i);
+}
+function resetResearch(){
+  ++REVIEW_SEQ; ++VERIFY_SEQ;++MODEL_SEQ;STAGED_DECISIONS={};DESK_PAGE=0;
+  CURRENT_RUN=null;LAST_SNAPSHOT=null;LAST_RESULT=null;LAST_VERIFY=null;LAST_INTERNAL=null;LAST_ART=null;LAST_EVIDENCE=null;BOUND_REFS="";window.__trust=null;
+  $("refs").value="";
+  for(const n of [1,2,3,4]) setStep(n,"","待运行");
+  for(const id of ["p1body","p2body","p3body","p4body"]) $(id).classList.add("hidden");
+  for(const id of ['resultOverview','literatureDesk','synthesisPanel','jobPanel'])$(id).classList.add('hidden');
+}
+
+/* ---------- 第0步：主题界定 ---------- */
+async function genDraft(){
+  $("globalStatus").innerHTML='<span class="spin"></span> 生成任务卡草稿…';
+  try{
+    const d=await post("/api/draft",{pico:$("pico").value});
+    if(!d.ok){ $("globalStatus").textContent="失败："+(d.error||""); return; }
+    $("yaml").value=d.yaml||"";
+    $("panel0").classList.remove("hidden");
+    let html='<table><tr><th>字段</th><th>草稿值</th><th>说明</th></tr>';
+    for(const c of (d.confirmations||[]))
+      html+=`<tr><td>${esc(c.field)}</td><td>${esc(c.value||"—")}</td><td class="muted small">${esc(c.note)}</td></tr>`;
+    html+='</table>';
+    if(d.missing_topic) html+='<p class="small" style="color:#c0392b">未识别出明确主题，请在上方把问题写得更具体。</p>';
+    $("confirmList").innerHTML=html;
+    $("globalStatus").textContent="已生成任务卡草稿，请核对后运行。";
+    $("panel0").scrollIntoView({behavior:"smooth"});
+  }catch(e){ $("globalStatus").textContent=e.message; }
+}
+function confirmRun(){ TASK_PICO=$("pico").value; $("panel0").classList.add("hidden"); runAll(); }
+function editTaskCard(){
+  loadTaskSettings().then(()=>$("taskSettings").scrollIntoView({behavior:"smooth"}));
+}
+
+
+/* ---------- 全流程 ---------- */
+async function runAll(){
+  if($("pico").value!==TASK_PICO){ await genDraft(); return; }
+  $("runAll").disabled=true;
+  try{
+    $("globalStatus").textContent="运行中…";
+    const a=await runMesh();
+    if(!a){ $("globalStatus").textContent="检索式生成失败，已停止。"; return; }
+    const b=await runReview();
+    if(!b){ $("globalStatus").textContent="没有可继续生成的材料或检索失败；请检查筛选结果，未核验旧记录。"; return; }
+    const verified=await runVerify();
+    await runSq3r();
+    $("globalStatus").textContent=verified?"流程检查完成；题录状态及正文证据请人工复核。":"核验未完成，请查看错误。";
+  }finally{ $("runAll").disabled=false; }
+}
+async function loadExample(){
+  try{ const d=await (await fetch(API+"/api/example")).json();
+    applyExample(d);
+  }catch(e){
+    $("pico").value="Does deep learning improve precision classification of knee osteoarthritis?";
+  }
+}
+function applyExample(d){
+  resetResearch(); TASK_PICO=d.pico||"";
+  $("pico").value=d.pico||""; $("yaml").value=d.task_yaml||"";
+  $("refs").value=!d.task_yaml?(d.refs||[]).map(r=>`${r.author||''} | ${r.year||''} | ${r.doi||''} | ${r.title||''}`).join('\n'):"";
+  for(const n of [1,2,3,4]) setStep(n,"","待运行");
+  for(const id of ["p1body","p2body","p3body","p4body"]) $(id).classList.add("hidden");
+  $("globalStatus").textContent=d.task_yaml?"已载入真实来源示例，点「运行全流程」。":"已载入独立核验挑战样本，包含故意构造的错误题录；请在第3步核验。";
+  $("taskForm").classList.add('hidden');
+  if(!d.task_yaml)$("panel3").scrollIntoView({behavior:'smooth'});
+}
+function loadDefaultExample(){
+  const list=(ALL_EXAMPLES||[]).filter(e=>e.mode==='pro'||!e.task_yaml);
+  if(list.length) applyExample(list[0]); else loadExample();
+}
+async function loadExamples(){
+  try{ const d=await (await fetch(API+"/api/examples")).json();
+    ALL_EXAMPLES=d.examples||[]; renderExamples(); }catch(e){}
+}
+function renderExamples(){
+  const el=$("examples"); if(!el) return;
+  el.querySelectorAll("button").forEach(b=>b.remove());
+  const list=(ALL_EXAMPLES||[]).filter(e=>e.mode==='pro'||!e.task_yaml);
+  for(const ex of list){
+    const b=document.createElement("button");
+    b.className="ghost mini"; b.textContent="▸ "+ex.name; b.title=ex.desc||"";
+    b.onclick=()=>applyExample(ex);
+    el.appendChild(b);
+  }
+}
+$("runAll").addEventListener("click",runAll);
+$("draft").addEventListener("click",genDraft);
+$("example").addEventListener("click",loadDefaultExample);
+$("beginner").addEventListener("change",e=>applyBegMode(e.target.checked));
+{ let on=false; try{ on=(localStorage.getItem("ew_beg")||"0")==="1"; }catch(e){} applyBegMode(on); }
+$("clear").addEventListener("click",()=>{ resetResearch(); $("pico").value=""; $("refs").value="";
+  for(const n of [1,2,3,4]){ setStep(n,"","待运行"); }
+  for(const id of ["p1body","p2body","p3body","p4body"]) $(id).classList.add("hidden");
+  $("globalStatus").textContent=""; });
+$("refs").addEventListener("input",()=>{ ++VERIFY_SEQ; LAST_VERIFY=null; $("p3body").classList.add("hidden"); });
+loadExamples().then(loadDefaultExample);
+loadHealth();
+loadWorkbenchExtras();
+saveHistory();
+applyTips();
+initPanelCollapse();
+MODE = "pro";
+</script>
+</body>
+</html>
