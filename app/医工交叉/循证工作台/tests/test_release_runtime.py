@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 import sys
 import threading
@@ -48,6 +49,19 @@ class LocalBoundaryTests(unittest.TestCase):
     def test_local_health_still_works(self):
         with urllib.request.urlopen(self.url) as response:
             self.assertEqual(response.read(), b'OK')
+
+    def test_removed_model_endpoints_do_not_start_a_job(self):
+        base = self.url.removesuffix('/healthz')
+        with patch.object(http_service.workbench_jobs, 'submit', side_effect=AssertionError('Removed feature must not start jobs')):
+            requests = [urllib.request.Request(base + '/api/capabilities'),
+                        urllib.request.Request(base + '/api/jobs/synthesis',
+                                               data=json.dumps({'run_id': 'a' * 32, 'provider': 'claude-cli'}).encode(),
+                                               headers={'Content-Type': 'application/json'})]
+            for request in requests:
+                with self.subTest(url=request.full_url):
+                    with self.assertRaises(urllib.error.HTTPError) as error:
+                        urllib.request.urlopen(request)
+                    self.assertEqual(error.exception.code, 404)
 
 
 if __name__ == '__main__':

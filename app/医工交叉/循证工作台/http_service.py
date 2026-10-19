@@ -14,7 +14,7 @@ MAX_BODY = 2 * 1024 * 1024
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'EvidenceWorkbench/1.0.0'
+    server_version = 'EvidenceWorkbench/1.0.1'
 
     def _local_request(self):
         """Reject other-site browser calls and unexpected Host/DNS names."""
@@ -54,9 +54,6 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(200, (BASE / 'presentation.css').read_bytes(), 'text/css; charset=utf-8')
             elif url.path == '/api/health':  # research diagnostics only
                 self._send(200, orchestrator.health())
-            elif url.path == '/api/capabilities':
-                import evidence_synthesis
-                self._send(200, {'ok': True, 'synthesis': evidence_synthesis.capabilities()})
             elif url.path == '/api/cases':
                 self._send(200, orchestrator.showcase_cases())
             elif url.path == '/api/jobs':
@@ -103,9 +100,6 @@ class Handler(BaseHTTPRequestHandler):
                     payload.get('task_yaml', ''), query=payload.get('query', ''), pico=payload.get('pico', ''), progress=progress))
             elif path == '/api/task':
                 result = orchestrator.task_card(payload.get('task_yaml', ''), payload.get('updates'))
-            elif path == '/api/jobs/synthesis':
-                result = workbench_jobs.submit('synthesis', lambda progress: orchestrator.synthesis_step(
-                    payload.get('run_id'), provider=payload.get('provider', 'extractive'), progress=progress))
             elif path == '/api/cases/replay':
                 result = orchestrator.replay_case(payload.get('case_id'))
             elif path == '/api/review':

@@ -28,26 +28,45 @@ class VersionAndCaseTests(unittest.TestCase):
         self.snapshot = o.review_step(d.EDU_TASK + '\nscreening_mode: strict\n')
         self.assertTrue(self.snapshot['ok'])
 
-    def test_extractive_draft_creates_child_and_keeps_original(self):
-        original_id = self.snapshot['run_id']
-        old = run_store.load(o.OUTPUTS_DIR, original_id)
-        child = o.synthesis_step(original_id)
-        self.assertTrue(child['ok'])
-        self.assertNotEqual(original_id, child['run_id'])
-        self.assertEqual(child['result']['parent_run_id'], original_id)
-        self.assertEqual(child['result']['synthesis']['provider'], 'extractive')
-        self.assertIsNone(child['verification'])
-        self.assertEqual(run_store.load(o.OUTPUTS_DIR, original_id), old)
-        self.assertTrue(child['result']['synthesis']['validation']['passed'])
+    def test_original_review_and_exports_work_without_any_model_process(self):
+        with patch('shutil.which', return_value=None), patch('subprocess.run', side_effect=AssertionError('No model process allowed')):
+            result = o.review_step(d.EDU_TASK + '\nscreening_mode: strict\n')
+            loaded = o.load_run(result['run_id'])
+            bundle = o.export_bundle(result['run_id'])
+        self.assertTrue(result['ok'])
+        self.assertTrue(result['result']['sections'])
+        self.assertTrue(result['result']['references'])
+        self.assertEqual(loaded['result']['sections'], result['result']['sections'])
+        self.assertNotIn('synthesis', result['result'])
+        self.assertTrue(bundle.startswith(b'PK'))
+        markdown = (run_store.directory(o.OUTPUTS_DIR, result['run_id']) / 'review.md').read_text(encoding='utf-8')
+        self.assertIn(result['result']['sections'][0]['title'], markdown)
+        self.assertIn(result['result']['references'][0]['title'], markdown)
 
-    def test_failed_model_keeps_saved_source_and_exposes_stage(self):
-        original_id = self.snapshot['run_id']
-        with patch('evidence_synthesis.synthesize', side_effect=RuntimeError('模型额度不足')):
-            result = o.synthesis_step(original_id, 'claude-cli')
-        self.assertFalse(result['ok'])
-        self.assertEqual(result['stage'], 'synthesis')
-        self.assertIn('额度', result['error'])
-        self.assertNotIn('synthesis', run_store.load(o.OUTPUTS_DIR, original_id)['result'])
+    def test_bundled_cases_use_original_sections_and_keep_real_source_records(self):
+        cases = o.showcase_cases()['cases']
+        self.assertEqual(len(cases), 2)
+        with patch('subprocess.run', side_effect=AssertionError('Replay must not launch a model')):
+            for case in cases:
+                replay = o.replay_case(case['id'])
+                result = replay['result']
+                self.assertTrue(result['sections'])
+                self.assertTrue(result['references'])
+                self.assertTrue(result['search'])
+                self.assertNotIn('synthesis', result)
+                self.assertNotIn('source_material_sections', result)
+                self.assertIn('未在此次重新查询', replay['replay']['note'])
+
+    def test_legacy_saved_draft_can_be_loaded_and_exported_without_cli(self):
+        identity = self.snapshot['run_id']
+        legacy = copy.deepcopy(self.snapshot)
+        legacy['result']['synthesis'] = {'provider': 'claude-cli', 'sections': []}
+        run_store.save(o.OUTPUTS_DIR, identity, legacy)
+        with patch('subprocess.run', side_effect=AssertionError('History must not launch a model')):
+            restored = o.load_run(identity)
+            self.assertTrue(o.export_bundle(identity).startswith(b'PK'))
+        self.assertEqual(restored['result']['sections'], legacy['result']['sections'])
+        self.assertEqual(run_store.load(o.OUTPUTS_DIR, identity), legacy)
 
     def test_evidence_bundle_contains_only_this_run_and_fixed_artifacts(self):
         import io

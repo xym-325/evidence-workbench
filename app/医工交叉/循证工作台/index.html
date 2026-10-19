@@ -164,7 +164,7 @@
   <code>http://127.0.0.1:8130/</code>。若后台已在运行，本页仍可自动连接。
 </div>
 <header>
-  <div class="eyebrow"><span class="brand-mark">循</span> EVIDENCE WORKBENCH · 医学学术智能体 <span class="tag">v1.0.0</span></div>
+  <div class="eyebrow"><span class="brand-mark">循</span> EVIDENCE WORKBENCH · 医学学术智能体 <span class="tag">v1.0.1</span></div>
   <h1 id="heroTitle">循证科研智能体工作台</h1>
   <p id="heroSub">从一个研究问题出发，找到文献、整理依据、核对引用。让综述里的每一步判断，都有迹可循。</p>
   <div class="badges">
@@ -172,7 +172,7 @@
     <span>③ 题录交叉核验</span><span>④ 引用与依据导出</span><span>真实来源 · 人工复核</span>
   </div>
 </header>
-<nav class="workflow-nav" aria-label="工作区导航"><div><span class="nav-brand">循证 / RESEARCH</span><a href="#controlPanel">研究问题</a><a href="#resultOverview">结果概览</a><a href="#literatureDesk">文献工作区</a><a href="#synthesisPanel">综述与依据</a><a href="#panel3">引用核验</a></div></nav>
+<nav class="workflow-nav" aria-label="工作区导航"><div><span class="nav-brand">循证 / RESEARCH</span><a href="#controlPanel">研究问题</a><a href="#resultOverview">结果概览</a><a href="#literatureDesk">文献工作区</a><a href="#reviewSections">综述与依据</a><a href="#panel3">引用核验</a></div></nav>
 
 <div class="wrap" id="proWrap">
   <div class="card beg" id="begBanner">
@@ -393,7 +393,6 @@
       </details>
       <div id="evidence"></div>
       <div id="literatureDesk" class="desk hidden"></div>
-      <div id="synthesisPanel" class="synthesis-card hidden"></div>
       <details class="pro-only"><summary>材料分布与内部检查记录</summary>
       <div class="grid2 pro-only" style="margin-top:12px">
         <div>
@@ -504,7 +503,7 @@ let MODE = "pro", ALL_EXAMPLES = [];
 let LAST_EVIDENCE = null;
 let TASK_PICO = "";
 let CURRENT_RUN = null, LAST_SNAPSHOT = null, BOUND_REFS = "", REVIEW_SEQ = 0, VERIFY_SEQ = 0;
-let DESK_PAGE=0, STAGED_DECISIONS={}, SYNTHESIS_CAPABILITY=null, MODEL_SEQ=0;
+let DESK_PAGE=0, STAGED_DECISIONS={};
 
 
 /* 若直接双击打开（file://），则把请求指向本地后端；否则用同源相对路径 */
@@ -554,7 +553,7 @@ function renderOverview(){
   el.innerHTML=(replay?`<div class="replay-banner"><b>真实案例回放</b> · 原始检索：${esc(replay.recorded_at||"见来源记录")}<br>${esc(replay.note||"本次未重新查询数据库或模型。")}原始运行 ${esc((replay.original_run_id||"").slice(0,12))}，可按现有任务卡重新实时检索。</div>`:"")+
     `<div class="result-heading">RESEARCH BRIEF <span class="tag ${r.status==='partial'?'warm':''}">${r.status==='partial'?'部分来源成功':r.status==='failed'?'检索失败':'研究材料已保存'}</span></div><h2>${esc(r.topic)}</h2>`+
     `<div class="metrics-grid">${[[st.retrieved??st.hit??0,'实际获取题录'],[st.dedup??0,'去重后保留'],[st.adopted??0,'推荐阅读文献'],[e.direct??0,'直接相关线索'],[passed===null?'—':passed,'题录核对通过']].map(([n,l],i)=>`<div class="metric ${i===2?'highlight':''}"><strong>${esc(n)}</strong><span>${esc(l)}</span></div>`).join("")}</div>`+
-    `<div class="flex"><span class="small muted">${esc((r.search||[]).map(s=>s.source).join(' + '))} · ${esc((r.created_at||'').slice(0,16).replace('T',' '))} · 运行 ${esc((CURRENT_RUN||'').slice(0,8))}</span><span class="tag">${r.synthesis?.provider==='claude-cli'?'AI中文初稿已生成':'摘要材料已整理'}</span></div>`+
+    `<div class="flex"><span class="small muted">${esc((r.search||[]).map(s=>s.source).join(' + '))} · ${esc((r.created_at||'').slice(0,16).replace('T',' '))} · 运行 ${esc((CURRENT_RUN||'').slice(0,8))}</span><span class="tag">文献材料已整理</span></div>`+
     `<div class="quiet-note">直接相关 ${e.direct||0} 篇，背景或方法参考 ${e.background||0} 篇。推荐清单用于研究导读；篇数不代表结论已被证明，题录核对通过也不等于主张通过。</div>`+
     `<div class="row"><button class="primary mini" onclick="document.getElementById('literatureDesk').scrollIntoView({behavior:'smooth'})">查看推荐与筛选</button><button class="ghost mini" onclick="downloadReview()">导出研究材料</button><button class="ghost mini" onclick="downloadEvidenceBundle()">导出证据包 ZIP</button></div>`;
 }
@@ -651,30 +650,7 @@ async function executeJob(route,payload,title,isCurrent){
   }
   throw new Error('等待超时，已完成的研究可从历史记录恢复。');
 }
-function renderSynthesis(){
-  const el=$("synthesisPanel");if(!LAST_RESULT?.references?.length){el.classList.add('hidden');return;}
-  el.classList.remove('hidden');
-  const document=LAST_RESULT.synthesis,available=SYNTHESIS_CAPABILITY?.available;
-  el.innerHTML=`<div class="flex"><div class="headline">从文献材料到综述初稿</div><span class="tag">${document?.provider==='claude-cli'?'Claude Code · 摘要级初稿':document?'摘要原句整理':'先选文献，再整理结论'}</span></div><p>围绕本次研究问题，比较已有方法与结果。AI初稿的每个段落附上文献编号和摘要原句，可展开逐段核对。</p><div class="row"><button class="primary mini" onclick="runSynthesis('claude-cli')" ${available?'':'disabled'}>AI 生成中文综述初稿</button><button class="ghost mini" onclick="runSynthesis('extractive')">仅整理摘要原句</button><span class="small muted">${esc(SYNTHESIS_CAPABILITY?.note||'正在检查本地AI工具…')}</span></div><div id="synthesisStatus" class="small muted" role="status" style="margin-top:8px">${document?esc(document.validation?.note||'逐段依据已保存，仍需人工核查含义。'):'点击AI生成时，将向本机Claude Code配置的模型服务发送本次选中文献的题录与摘要，并使用其额度。'}</div>`;
-}
-async function runSynthesis(provider){
-  if(!CURRENT_RUN)return;
-  const run=CURRENT_RUN,seq=++MODEL_SEQ;
-  $("synthesisStatus").textContent='正在整理，原检索结果将保留…';
-  $("synthesisPanel").querySelectorAll('button').forEach(b=>b.disabled=true);
-  try{
-    const d=await executeJob('/api/jobs/synthesis',{run_id:run,provider},'正在生成综述与逐段依据',()=>seq===MODEL_SEQ&&run===CURRENT_RUN);
-    if(!d)return;if(!d.ok)throw new Error(d.error||'生成未完成');
-    renderReviewResponse(d);await saveHistory();$("globalStatus").textContent='已保存新的综述版本；可以展开段落下方的摘要依据逐条核查。';
-    $("reviewSections").scrollIntoView({behavior:'smooth'});
-  }catch(e){if(seq===MODEL_SEQ){renderSynthesis();$("synthesisStatus").textContent=e.message;}}
-}
-function synthesisHtml(document){
-  if(!document)return '';
-  return '<div class="synthesis-document">'+document.sections.map(s=>`<h3>${esc(s.heading)}</h3>`+s.paragraphs.map(p=>`<p class="para">${citeHtml(p.text+' '+[...new Set(p.evidence.map(a=>'['+a.n+']'))].join(''),LAST_RESULT.references||[])}</p><details><summary>核对本段依据 · ${p.evidence.length} 处摘要原句</summary>${p.evidence.map(a=>`<div class="anchor-quote"><div class="quote-source">文献 [${esc(a.n)}] · 摘要原文</div>${esc(a.quote)}</div>`).join('')}</details>`).join('')).join('')+'<h3>适用范围与待核事项</h3><ul class="small">'+(document.limitations||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
-}
 async function loadWorkbenchExtras(){
-  try{const d=await (await fetch(API+'/api/capabilities')).json();if(d.ok){SYNTHESIS_CAPABILITY=d.synthesis;if(LAST_RESULT)renderSynthesis();}}catch(e){}
   try{const d=await (await fetch(API+'/api/cases')).json();if(!d.ok)throw new Error(d.error);const el=$("caseButtons");el.innerHTML='';for(const c of d.cases||[]){const b=document.createElement('button');b.className='ghost mini';b.textContent='回放 · '+c.title;b.onclick=()=>replayCase(c.id);el.appendChild(b);}$("casePanel").classList.toggle('hidden',!(d.cases||[]).length);}catch(e){$("casePanel").classList.add('hidden');}
 }
 async function replayCase(id){
@@ -885,7 +861,6 @@ function renderReviewResponse(d){
       html+=`</details>`;
     }
     $("reviewSections").innerHTML=html;
-    if(r.synthesis)$("reviewSections").innerHTML=html.slice(0,html.indexOf('</div>')+6)+synthesisHtml(r.synthesis);
     LAST_RESULT=r;
     renderRefs();
     renderEva(r);
@@ -897,7 +872,7 @@ function renderReviewResponse(d){
     renderTrust(r, d.internal, d.artifacts);
     LAST_EVIDENCE = d.evidence || null;
     renderEvidence(d.evidence);
-    renderOverview();renderDesk();renderSynthesis();
+    renderOverview();renderDesk();
     // refs
     renderRefs();    // excluded
     if((r.excluded||[]).length){
@@ -1074,7 +1049,6 @@ function buildMarkdown(){
   if(QUERY) md+="## 检索式（可直接粘贴 PubMed）\n\n```\n"+QUERY+"\n```\n\n";
   if(r){
     if(r.replay)md+="> **真实案例回放**：原始检索时间 "+r.replay.recorded_at+"；本次未重新查询数据库或模型。\n\n";
-    if(r.synthesis)md+="**正文整理方式**："+(r.synthesis.provider==='claude-cli'?'Claude Code中文初稿':'摘要原句整理')+"；"+r.synthesis.validation.note+"\n\n";
     md+="## 检索与筛选\n\n- "+r.search_line+"\n- "+r.screen_line+"\n\n";
     for(const sec of (r.sections||[])){
       md+="### "+sec.index+"、"+sec.title+"\n\n";
@@ -1090,7 +1064,6 @@ function buildMarkdown(){
       md+=ref.n+". "+ref.authors+". "+ref.title+". "+ref.venue+", "+ref.year+
          ((ref.tags&&ref.tags.length)?" ["+ref.tags.join("/")+"]":"")+". "+(ref.record_url||ref.search_url||"")+" · "+(ref.evidence_level||"全文待核")+"\n";
     md+="\n";
-    if(r.synthesis){md+="### 逐段摘要依据\n\n";for(const sec of r.synthesis.sections){md+="#### "+sec.heading+"\n\n";for(const p of sec.paragraphs){md+=p.text+"\n\n";for(const a of p.evidence)md+="> 文献 ["+a.n+"] · 摘要原文："+a.quote+"\n\n";}}}
   }
   if(LAST_VERIFY && LAST_VERIFY.run_id===CURRENT_RUN){
     md+="## 引用真实性核验\n\n";
@@ -1182,7 +1155,6 @@ function buildHtmlReport(){
   if(QUERY) h+="<h2>检索式</h2><pre style='white-space:pre-wrap'>"+esc(QUERY)+"</pre>";
   if(r){
     if(r.replay)h+="<p><b>真实案例回放：</b>原始检索时间 "+esc(r.replay.recorded_at)+"；本次未重新查询数据库或模型。</p>";
-    if(r.synthesis)h+="<p><b>正文整理方式：</b>"+esc(r.synthesis.provider==='claude-cli'?'Claude Code中文初稿':'摘要原句整理')+"；"+esc(r.synthesis.validation.note)+"</p>";
     h+="<h2>检索与筛选</h2><p>"+esc(r.search_line)+"<br>"+esc(r.screen_line)+"</p>";
     h+="<h2>PRISMA 筛选流程图</h2>"+prismaSVG(r.stats||{});
     for(const sec of (r.sections||[])){
@@ -1197,7 +1169,6 @@ function buildHtmlReport(){
     h+="<h2>参考文献</h2><ol>"+(r.references||[]).map(ref=>
       "<li>"+esc(ref.authors)+". "+esc(ref.title)+". <i>"+esc(ref.venue)+"</i>, "+esc(ref.year)+". "+
       ((ref.tags&&ref.tags.length)?"<small>["+esc(ref.tags.join("/"))+"]</small>":"")+" "+fulltextLinks(ref)+"</li>").join("")+"</ol>";
-    if(r.synthesis){h+="<h2>逐段摘要依据</h2>";for(const sec of r.synthesis.sections){h+="<h3>"+esc(sec.heading)+"</h3>";for(const p of sec.paragraphs){h+="<p>"+esc(p.text)+"</p>";for(const a of p.evidence)h+="<blockquote>文献 ["+esc(a.n)+"] · 摘要原文："+esc(a.quote)+"</blockquote>";}}}
   }
   if(LAST_VERIFY && LAST_VERIFY.run_id===CURRENT_RUN){
     h+="<h2>引用真实性核验</h2><table border='1' cellpadding='6' style='border-collapse:collapse'>"+
@@ -1576,12 +1547,12 @@ async function clearHistory(){
   for(let i=items.length-1;i>=0;i--) await delHistory(i);
 }
 function resetResearch(){
-  ++REVIEW_SEQ; ++VERIFY_SEQ;++MODEL_SEQ;STAGED_DECISIONS={};DESK_PAGE=0;
+  ++REVIEW_SEQ; ++VERIFY_SEQ;STAGED_DECISIONS={};DESK_PAGE=0;
   CURRENT_RUN=null;LAST_SNAPSHOT=null;LAST_RESULT=null;LAST_VERIFY=null;LAST_INTERNAL=null;LAST_ART=null;LAST_EVIDENCE=null;BOUND_REFS="";window.__trust=null;
   $("refs").value="";
   for(const n of [1,2,3,4]) setStep(n,"","待运行");
   for(const id of ["p1body","p2body","p3body","p4body"]) $(id).classList.add("hidden");
-  for(const id of ['resultOverview','literatureDesk','synthesisPanel','jobPanel'])$(id).classList.add('hidden');
+  for(const id of ['resultOverview','literatureDesk','jobPanel'])$(id).classList.add('hidden');
 }
 
 /* ---------- 第0步：主题界定 ---------- */

@@ -27,7 +27,7 @@ import desktop_app
 import runtime_paths
 
 _UNSET = object()
-FAKE_VALUES = {'app_id': 'evidence-workbench', 'version': '1.0.0', 'ok': True}
+FAKE_VALUES = {'app_id': 'evidence-workbench', 'version': '1.0.1', 'ok': True}
 
 
 class FakeProcess:
@@ -439,7 +439,7 @@ class SelfTestTests(WorkspaceCase):
         self.assertEqual(report['report_path'], str(self.report.resolve()))
 
     def test_self_test_fails_on_wrong_app_identity(self):
-        stub = HttpStub(health={'app_id': 'wrong-app', 'version': '1.0.0', 'ok': True})
+        stub = HttpStub(health={'app_id': 'wrong-app', 'version': '1.0.1', 'ok': True})
         code, backend = self.run_with(stub, report=self.report)
         self.assertEqual(code, 1)
         report = self.read_report()
@@ -720,7 +720,7 @@ class CliTests(WorkspaceCase):
 
 class ImportContractTests(WorkspaceCase):
     def test_runtime_paths_public_contract(self):
-        self.assertEqual(runtime_paths.VERSION, '1.0.0')
+        self.assertEqual(runtime_paths.VERSION, '1.0.1')
         self.assertEqual(runtime_paths.APP_ID, 'evidence-workbench')
         self.assertTrue(runtime_paths.APP_NAME)
         self.assertEqual(runtime_paths.workbench_root().name, '循证工作台')
@@ -740,7 +740,7 @@ class ImportContractTests(WorkspaceCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         fields = result.stdout.strip().split()
-        self.assertEqual(fields, ['0', '0', '0', 'evidence-workbench', '1.0.0'])
+        self.assertEqual(fields, ['0', '0', '0', 'evidence-workbench', '1.0.1'])
 
 
 if __name__ == '__main__':

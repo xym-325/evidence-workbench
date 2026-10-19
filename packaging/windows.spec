@@ -28,7 +28,7 @@ for path in (project / 'academic-agent-v2' / '学术智能体' / 'src').glob('*.
 include(agent / 'agent.py')
 
 imports = ['desktop_app', 'runtime_paths', 'http_service', 'orchestrator', 'research_engine',
-           'demo_data', 'evidence_policy', 'evidence_synthesis', 'run_store', 'workbench_jobs',
+           'demo_data', 'evidence_policy', 'run_store', 'workbench_jobs',
            'agent', 'sources', 'miniyaml', 'webview.platforms.winforms', 'webview.platforms.edgechromium']
 imports += collect_submodules('mesh_query')
 a = Analysis([str(root / 'run.py')], pathex=[str(workbench), str(agent), str(mesh)],

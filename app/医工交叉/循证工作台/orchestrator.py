@@ -873,45 +873,6 @@ def archive_run(run_id):
         return {'ok': True, 'run_id': run_id, 'archived': True}
 
 
-def synthesis_step(run_id, provider='extractive', progress=None):
-    """Create a new draft version; never replace a source or its verification."""
-    import evidence_synthesis
-    snapshot = load_run(run_id)
-    if provider not in {'extractive', 'claude-cli'}:
-        raise ValueError('不支持的整理方式')
-    if not snapshot.get('ok') or not snapshot['result'].get('references'):
-        raise ValueError('请先完成检索并选定文献')
-    if progress:
-        progress({'stage': 'synthesis', 'message': '正在根据已选文献整理中文初稿与逐段摘要依据' if provider == 'claude-cli' else '正在整理原始摘要证据'})
-    try:
-        document = evidence_synthesis.synthesize(snapshot['result'], provider=provider)
-    except (RuntimeError, ValueError) as exc:
-        return {'ok': False, 'stage': 'synthesis', 'error': str(exc)}
-    with RUN_LOCK:
-        result = snapshot['result']
-        child_id = run_store.new_id()
-        result.setdefault('source_material_sections', result.get('sections', []))
-        result['synthesis'] = document
-        if snapshot.get('replay'):
-            snapshot['replay']['note'] = '基于已保存的真实检索材料，本次重新整理了初稿；未重新检索数据库。'
-            result['replay'] = snapshot['replay']
-        result['sections'] = [
-            {'index': i + 1, 'title': section['heading'], 'blocks': [
-                {'heading': '', 'paragraphs': [p['text'] + ' ' + ''.join('[%s]' % a['n'] for a in p['evidence'])]}
-                for p in section['paragraphs']], 'items': []}
-            for i, section in enumerate(document['sections'])]
-        result['sections'].append({'index': len(result['sections']) + 1, 'title': '材料范围与待核事项',
-                                   'blocks': [], 'items': document.get('limitations', [])})
-        result.update(run_id=child_id, created_at=engine.now(), parent_run_id=run_id, verification=None)
-        result['word_count'] = sum(len(p) for s in result['sections'] for b in s['blocks'] for p in b['paragraphs'])
-        snapshot.update(run_id=child_id, result=result, verification=None,
-                        internal=internal_verify(result), viz=_review_viz(result), evidence=evidence_map(result))
-        snapshot['artifacts'] = save_artifacts(snapshot['task_yaml'], result, snapshot['internal'], snapshot['plan'], child_id)
-        run_store.write_json(run_store.directory(OUTPUTS_DIR, child_id) / 'synthesis.json', document)
-        run_store.save(OUTPUTS_DIR, child_id, snapshot)
-    return snapshot
-
-
 def task_card(task_yaml, updates=None):
     """Form editing preserves advanced source queries and custom rules."""
     _ensure_paths()

@@ -14,10 +14,13 @@ async function main(){
   await page.goto(base,{waitUntil:'networkidle'});
   await page.waitForFunction(()=>document.getElementById('pico').value.length>0);
   assert.equal(await page.locator('.workflow-nav').count(),1);
+  assert.equal(await page.locator('#synthesisPanel').count(),0);
+  assert.equal(await page.getByRole('button',{name:'AI 生成中文综述初稿',exact:true}).count(),0);
   await page.screenshot({path:path.join(out,'01-研究入口.png')});
   await page.evaluate(id=>loadReviewRecord({run_id:id}),runId);
   await page.locator('#resultOverview').waitFor({state:'visible'});
   assert.equal(await page.locator('#resultOverview .metric').count(),5);
+  assert.ok(await page.locator('#reviewSections details.sec').count()>0);
   await page.locator('#resultOverview').scrollIntoViewIfNeeded();
   await page.screenshot({path:path.join(out,'02-结果概览.png')});
   await page.locator('#deskSearch').fill('SGDA');
@@ -26,13 +29,9 @@ async function main(){
   await page.locator('#deskSearch').fill('');
   await page.locator('#literatureDesk').scrollIntoViewIfNeeded();
   await page.screenshot({path:path.join(out,'03-文献工作区.png')});
-  if(await page.locator('.synthesis-document').count()){
-    assert.ok(await page.locator('.synthesis-document h3').count()>=3);
-    await page.locator('.synthesis-document details').first().locator('summary').click();
-    assert.ok(await page.locator('.anchor-quote:visible').count()>0);
-    await page.locator('.synthesis-document').scrollIntoViewIfNeeded();
-    await page.screenshot({path:path.join(out,'04-综述与逐段依据.png')});
-  }
+  await page.locator('#reviewSections > details.sec').first().locator(':scope > summary').click();
+  await page.locator('#reviewSections').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(out,'04-原有综述与引用.png')});
   const downloadPromise=page.waitForEvent('download');
   await page.evaluate(()=>downloadReview());
   const download=await downloadPromise;
@@ -40,7 +39,6 @@ async function main(){
   const markdown=fs.readFileSync(downloaded,'utf8');
   assert.ok(markdown.includes('参考文献'));
   assert.ok(!markdown.includes('undefined'));
-  if(await page.locator('.synthesis-document').count())assert.ok(markdown.includes('逐段摘要依据'));
   const zipPromise=page.waitForEvent('download');
   await page.evaluate(()=>downloadEvidenceBundle());
   const zipped=await zipPromise;const zipPath=path.join(out,'浏览器导出证据包.zip');await zipped.saveAs(zipPath);

@@ -15,7 +15,7 @@ function element(id = '') {
     appendChild(){}, scrollIntoView(){}, remove(){}, click(){}};
 }
 for (const [, id] of html.matchAll(/\bid="([^"]+)"/g)) elements.set(id, element(id));
-for(const id of ['deskSearch','deskFilter','deskRows','deskStatus','deskCount','deskPrev','deskNext','saveDecisions','synthesisStatus']) elements.set(id,element(id));
+for(const id of ['deskSearch','deskFilter','deskRows','deskStatus','deskCount','deskPrev','deskNext','saveDecisions']) elements.set(id,element(id));
 const requests=[];
 const storage = new Map([['ew_tour','1']]);
 const verification = {ok:true,run_id:snapshot.run_id,refs:snapshot.result.references.map(r=>({...r,verdict:'演示未核验',reason:'mock',matched_by:'未查询'})),summary:[{name:'演示未核验',count:snapshot.result.references.length}],offline:true};
@@ -31,7 +31,6 @@ const context=vm.createContext({console,URL,Blob,Date,Math,JSON,Set,Map,setTimeo
     if(url.endsWith('/api/examples')) data={ok:true,examples:[]};
     else if(url.endsWith('/api/example')) data={pico:'fixture',task_yaml:snapshot.task_yaml};
     else if(url.endsWith('/api/cases')) data={ok:true,cases:[]};
-    else if(url.endsWith('/api/capabilities')) data={ok:true,synthesis:{available:false,note:'fixture'}};
     else if(url.endsWith('/api/health')) data={ok:true,components:[]};
     else if(url.endsWith('/api/runs')) data={ok:true,runs:[]};
     else if(url.includes('/api/run?id=')) data=snapshot;
@@ -47,6 +46,12 @@ async function run(){
   context.sample=snapshot;
   vm.runInContext('renderReviewResponse(sample)',context);
   assert.equal(vm.runInContext('CURRENT_RUN',context),snapshot.run_id);
+  assert.ok(!html.includes('runSynthesis'));
+  assert.ok(!html.includes('synthesisPanel'));
+  assert.ok(!html.includes('Claude Code'));
+  assert.ok(!requests.some(r=>r.url.includes('/api/capabilities')||r.url.includes('/api/jobs/synthesis')));
+  assert.ok(elements.get('reviewSections').innerHTML.includes(snapshot.result.sections[0].title));
+  assert.ok(vm.runInContext('buildMarkdown()',context).includes(snapshot.result.sections[0].title));
   await vm.runInContext('runVerify()',context);
   assert.equal(requests.findLast(r=>r.url.endsWith('/api/verify')).body.run_id,snapshot.run_id);
   assert.ok(!elements.get('compare').innerHTML.includes('AI 编的引用'));

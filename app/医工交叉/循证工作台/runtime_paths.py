@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import sys
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 APP_ID = 'evidence-workbench'
 APP_NAME = '循证科研工作台'
 
